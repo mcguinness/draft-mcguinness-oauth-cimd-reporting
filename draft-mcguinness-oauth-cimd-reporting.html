@@ -1362,8 +1362,10 @@ not permitted by local policy, the failure is visible to the end user
 and to the operator of that authorization server. The publisher of the
 document is not informed. A change to the document can therefore cause
 the client to fail at authorization servers that the publisher cannot
-observe, and the publisher cannot test a proposed change against those
-servers before deploying it.<a href="#section-1-2" class="pilcrow">¶</a></p>
+observe. Publishers can arrange tests with authorization servers they
+know, but there is no standardized way to obtain feedback on a document,
+or on a proposed change, from independently operated authorization
+servers.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">This specification defines two optional functions that an
 authorization server can perform for a client that requests them:<a href="#section-1-3" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1-4">
@@ -1377,14 +1379,19 @@ served at a separate URL, and reporting the results without applying
 the candidate to any OAuth request.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
-<p id="section-1-5">Both functions retain one active document for each Client Identifier
+<p id="section-1-5">This version primarily supports diagnosing problems with metadata that
+authorization servers have previously accepted, and evaluating proposed
+changes at participating authorization servers. Failures at an
+authorization server's first contact with a client are not reported
+(<a href="#establishing" class="auto internal xref">Section 4.1</a>).<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">Both functions retain one active document for each Client Identifier
 URL; serving a document at the Client Identifier URL remains the only
 way to change the client's metadata. Neither function changes how the
 authorization server processes OAuth requests (<a href="#independence" class="auto internal xref">Section 3.1</a>). The
 approach follows SMTP TLS Reporting <span>[<a href="#RFC8460" class="cite xref">RFC8460</a>]</span>, in which sending
 systems report failures to recipient domains that cannot otherwise
 observe them, as a companion to the specifications that define the
-policies themselves.<a href="#section-1-5" class="pilcrow">¶</a></p>
+policies themselves.<a href="#section-1-6" class="pilcrow">¶</a></p>
 <div id="scope">
 <section id="section-1.1">
         <h3 id="name-scope">
@@ -1587,9 +1594,9 @@ ignore this member if <code>client_metadata_report_uri</code> is absent.<a href=
 </dl>
 <p id="section-4-3">The value of each member <span class="bcp14">MUST</span> be an absolute URL that uses the <code>https</code>
 scheme, has the same origin (<span><a href="https://rfc-editor.org/rfc/rfc6454#section-5" class="relref">Section 5</a> of [<a href="#RFC6454" class="cite xref">RFC6454</a>]</span>) as the Client
-Identifier URL, and has no fragment component. Origin comparison differs
-from the simple string comparison that <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-3" class="relref">Section 3</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> requires
-for Client Identifier URLs: for example,
+Identifier URL, and has no userinfo or fragment component. Origin
+comparison differs from the simple string comparison that
+<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-3" class="relref">Section 3</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> requires for Client Identifier URLs: for example,
 <code>https://client.example:443/reports</code> has the same origin as the Client
 Identifier URL <code>https://client.example/oauth/client.json</code>. A reporter
 <span class="bcp14">MUST</span> treat a member whose value does not meet the requirements of this
@@ -1864,18 +1871,27 @@ the report for the digest of the document that references them.<a href="#section
         <h3 id="name-candidate-document-evaluati">
 <a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-candidate-document-evaluati" class="section-name selfRef">Candidate Document Evaluation</a>
         </h3>
-<p id="section-5.4-1">A reporter <span class="bcp14">MAY</span> evaluate the candidate document named by its reporting
+<p id="section-5.4-1">Authorization server metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> advertises capabilities such
+as supported grant types and client authentication methods, which a
+publisher can check without this specification. Candidate evaluation
+adds the result of the reporter's actual processing and of its
+client-specific policy, which metadata does not convey. For example, a
+proposed redirect URI on another origin can pass the publisher's own
+validation and match every advertised capability, yet violate a
+reporter's policy that restricts redirect URIs to the origin of the
+Client Identifier URL (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.4" class="relref">Section 4.4</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>).<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<p id="section-5.4-2">A reporter <span class="bcp14">MAY</span> evaluate the candidate document named by its reporting
 configuration, for example after it establishes reporting configuration
-that includes a candidate URL, or when the candidate URL changes.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
-<p id="section-5.4-2">The reporter retrieves the candidate document as it retrieves a Client
+that includes a candidate URL, or when the candidate URL changes.<a href="#section-5.4-2" class="pilcrow">¶</a></p>
+<p id="section-5.4-3">The reporter retrieves the candidate document as it retrieves a Client
 ID Metadata Document (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>), including the prohibition
 on following redirects, and applies the same size limit
 (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.11" class="relref">Section 10.11</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>) and request forgery protections
 (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>). The reporter <span class="bcp14">MAY</span> use HTTP caching
 <span>[<a href="#RFC9111" class="cite xref">RFC9111</a>]</span>, including conditional requests, to avoid retrieving an
 unchanged candidate document. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.5" class="relref">Section 4.5</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> applies to a
-candidate document as it applies to a Client ID Metadata Document.<a href="#section-5.4-2" class="pilcrow">¶</a></p>
-<p id="section-5.4-3">A candidate document describes the client identified by the Client
+candidate document as it applies to a Client ID Metadata Document.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
+<p id="section-5.4-4">A candidate document describes the client identified by the Client
 Identifier URL, not a separate client identified by the candidate URL.
 Its <code>client_id</code> member <span class="bcp14">MUST</span> be identical, under simple string
 comparison (<span><a href="https://rfc-editor.org/rfc/rfc3986#section-6.2.1" class="relref">Section 6.2.1</a> of [<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>), to the Client Identifier
@@ -1883,51 +1899,51 @@ URL. For candidate documents, this requirement replaces the requirement
 in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4" class="relref">Section 4</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> that the <code>client_id</code> value match the URL used
 to retrieve the document. A reporter reports a mismatch as the outcome
 <code>incompatible</code> for the <code>document_structure</code> check, with the reason
-<code>client_id_mismatch</code>.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
-<p id="section-5.4-4">A reporter evaluating a candidate document:<a href="#section-5.4-4" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.4-5">
-<li id="section-5.4-5.1">
-            <p id="section-5.4-5.1.1"><span class="bcp14">MUST NOT</span> use the candidate document's metadata to process any OAuth
+<code>client_id_mismatch</code>.<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+<p id="section-5.4-5">A reporter evaluating a candidate document:<a href="#section-5.4-5" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.4-6">
+<li id="section-5.4-6.1">
+            <p id="section-5.4-6.1.1"><span class="bcp14">MUST NOT</span> use the candidate document's metadata to process any OAuth
 request, replace or modify the active document's metadata, admit a
 client, issue credentials or tokens, or change an existing grant or
 consent, and <span class="bcp14">MUST NOT</span> store the candidate document where request
-processing reads client metadata.<a href="#section-5.4-5.1.1" class="pilcrow">¶</a></p>
+processing reads client metadata.<a href="#section-5.4-6.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.4-5.2">
-            <p id="section-5.4-5.2.1"><span class="bcp14">MUST NOT</span> retrieve, or deliver reports to, the URLs in the candidate
+          <li id="section-5.4-6.2">
+            <p id="section-5.4-6.2.1"><span class="bcp14">MUST NOT</span> retrieve, or deliver reports to, the URLs in the candidate
 document's <code>client_metadata_report_uri</code> or
 <code>client_metadata_candidate_uri</code> members. The reporter <span class="bcp14">MAY</span> check
-those values as it checks any other member.<a href="#section-5.4-5.2.1" class="pilcrow">¶</a></p>
+those values as it checks any other member.<a href="#section-5.4-6.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.4-5.3">
-            <p id="section-5.4-5.3.1"><span class="bcp14">MUST NOT</span> perform an authorization flow, token request, or client
+          <li id="section-5.4-6.3">
+            <p id="section-5.4-6.3.1"><span class="bcp14">MUST NOT</span> perform an authorization flow, token request, or client
 authentication on behalf of the candidate, and <span class="bcp14">MUST NOT</span> replay any
-credential presented by a client instance.<a href="#section-5.4-5.3.1" class="pilcrow">¶</a></p>
+credential presented by a client instance.<a href="#section-5.4-6.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.4-5.4">
-            <p id="section-5.4-5.4.1"><span class="bcp14">MUST NOT</span> use the result of a candidate evaluation when processing an
+          <li id="section-5.4-6.4">
+            <p id="section-5.4-6.4.1"><span class="bcp14">MUST NOT</span> use the result of a candidate evaluation when processing an
 active document, including an active document whose octets are
-identical to an evaluated candidate document.<a href="#section-5.4-5.4.1" class="pilcrow">¶</a></p>
+identical to an evaluated candidate document.<a href="#section-5.4-6.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.4-6">Other than the URLs excluded by item 2, a reporter <span class="bcp14">MAY</span> retrieve URLs in
+<p id="section-5.4-7">Other than the URLs excluded by item 2, a reporter <span class="bcp14">MAY</span> retrieve URLs in
 the candidate document that it would retrieve when processing OAuth
 requests with the candidate as the client's metadata, such as
-<code>jwks_uri</code>, subject to <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-5.4-6" class="pilcrow">¶</a></p>
-<p id="section-5.4-7">A check whose result depends on evidence available only while
+<code>jwks_uri</code>, subject to <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-5.4-7" class="pilcrow">¶</a></p>
+<p id="section-5.4-8">A check whose result depends on evidence available only while
 processing an OAuth request produces the outcome <code>indeterminate</code> with
 the reason <code>runtime_evidence_required</code>. For example, a reporter can
 determine that it supports <code>private_key_jwt</code> as a
 <code>token_endpoint_auth_method</code> value, but not that deployed client
 instances hold a private key corresponding to a public key the
-candidate document publishes.<a href="#section-5.4-7" class="pilcrow">¶</a></p>
-<p id="section-5.4-8">The following is an example of a candidate document that would replace
+candidate document publishes.<a href="#section-5.4-8" class="pilcrow">¶</a></p>
+<p id="section-5.4-9">The following is an example of a candidate document that would replace
 the active document in <a href="#fig-active" class="auto internal xref">Figure 2</a>. It adds a redirect URI on
 another origin, adds the device authorization grant type, and changes
-the client authentication method:<a href="#section-5.4-8" class="pilcrow">¶</a></p>
+the client authentication method:<a href="#section-5.4-9" class="pilcrow">¶</a></p>
 <span id="name-example-candidate-document"></span><div id="fig-candidate">
 <figure id="figure-3">
-          <div class="lang-json sourcecode" id="section-5.4-9.1">
+          <div class="lang-json sourcecode" id="section-5.4-10.1">
 <pre>
 {
   "client_id": "https://client.example/oauth/client.json",
@@ -2162,10 +2178,12 @@ invalid.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
 <code>retrieval</code> check, to the resource that member identifies. A result that
 names no member applies to the document as a whole. For the <code>retrieval</code>
 check, it describes retrieval of the document itself. For other checks,
-an <code>incompatible</code> or <code>indeterminate</code> result that names no member
-describes a problem without identifying a member, and a <code>compatible</code>
-result that names no member states that the check found no problem other
-than those reported in results that name members.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+a <code>compatible</code> result that names no member states that the check found
+no problem, and an <code>incompatible</code> or <code>indeterminate</code> result that names
+no member describes a problem without identifying a member. Except for
+the <code>retrieval</code> check, the results of one evaluation <span class="bcp14">MUST NOT</span> include
+both a <code>compatible</code> result that names no member and another result for
+the same check.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="active-reports">
@@ -2194,9 +2212,12 @@ reporter performed it.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
         <h3 id="name-candidate-reports">
 <a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-candidate-reports" class="section-name selfRef">Candidate Reports</a>
         </h3>
-<p id="section-6.4-1">A candidate report describes one evaluation of a candidate document. It
+<p id="section-6.4-1">A candidate report describes one evaluation of a candidate document and
 contains at least one result for each check defined in this
-specification, including results with the outcome <code>compatible</code>. A
+specification. For a check that found no problem, the report contains a
+<code>compatible</code> result that names no member. If every result for a check
+names a member, the members that no result for that check names had no
+problem under that check. A
 reporter that does not perform one of those checks, by local policy or
 because an earlier check failed, reports it with the outcome
 <code>indeterminate</code> and the reason <code>not_evaluated</code>. For example, after a
@@ -2225,10 +2246,15 @@ through registered check and reason values rather than free-form text.<a href="#
 <p id="section-6.6-1">The following example shows a report of an evaluation of the candidate
 document in <a href="#fig-candidate" class="auto internal xref">Figure 3</a>. The reporter does not support the device
 authorization grant, and its policy restricts redirect URIs to the
-origin of the Client Identifier URL. The <code>compatible</code> results that name
-no member state that those checks found no other problem. The digest is
-computed over the octets of the document exactly as shown in
-<a href="#fig-candidate" class="auto internal xref">Figure 3</a>, with LF line endings and no trailing line break.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+origin of the Client Identifier URL. The unsupported device
+authorization grant does not by itself prevent use of the client,
+because the reporter uses the intersection of the declared and supported
+grant types (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>); the result tells the publisher that
+the grant type will not be available. Because every result for the
+<code>supported_values</code> and <code>metadata_policy</code> checks names a member, the
+other members had no problem under those checks. The digest is computed
+over the octets of the document exactly as shown in <a href="#fig-candidate" class="auto internal xref">Figure 3</a>,
+with LF line endings and no trailing line break.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-6.6-2">
 <pre>
 {
@@ -2254,15 +2280,13 @@ computed over the octets of the document exactly as shown in
       "outcome": "incompatible",
       "reason": "unsupported_value"
     },
-    {"check": "supported_values", "outcome": "compatible"},
     {
       "check": "metadata_policy",
       "member": "redirect_uris",
       "values": ["https://app.example.net/callback"],
       "outcome": "incompatible",
       "reason": "policy_violation"
-    },
-    {"check": "metadata_policy", "outcome": "compatible"}
+    }
   ]
 }
 </pre><a href="#section-6.6-2" class="pilcrow">¶</a>
@@ -2588,10 +2612,11 @@ can use longer reporting periods or delay delivery.<a href="#section-10.2-1" cla
 <p id="section-10.2-2">Candidate reports carry the same risk in a different form: a candidate
 report describes one evaluation, so if a reporter evaluates a candidate
 document immediately after an OAuth request causes it to retrieve the
-active document, the report's reporting period reveals when that
-request occurred. Reporters can evaluate candidate documents on a
-schedule independent of OAuth requests, or delay candidate reports.
-Reports carry no end-user identifiers (<a href="#content" class="auto internal xref">Section 6.5</a>).<a href="#section-10.2-2" class="pilcrow">¶</a></p>
+active document, the report's reporting period reveals when that request
+occurred. Reporters can evaluate candidate documents on a schedule
+independent of OAuth requests, or report a coarser reporting period that
+contains the evaluation; delaying delivery alone does not conceal the
+reporting period. Reports carry no end-user identifiers (<a href="#content" class="auto internal xref">Section 6.5</a>).<a href="#section-10.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3158,44 +3183,49 @@ the Specification Document is <a href="#reasons" class="auto internal xref">Sect
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
       </h2>
 <p id="appendix-A-1">This section is to be removed before publishing as an RFC.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-<p id="appendix-A-2">The following questions affect the mechanism this document defines.
-Other open questions are tracked in the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues">issue
+<p id="appendix-A-2">The following questions determine the scope and deployment model of the
+mechanism this document defines, and are listed in the order in which
+the author suggests the working group discuss them. Other open
+questions, including operational parameters and reporter authentication,
+are tracked in the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues">issue
 tracker</a>.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="appendix-A-3">
 <li id="appendix-A-3.1">
-          <p id="appendix-A-3.1.1">Reporting before first acceptance. A reporter cannot report problems
+          <p id="appendix-A-3.1.1">Combining active reporting and candidate evaluation. Active document
+reporting records the results of processing that a reporter already
+performs; candidate evaluation (<a href="#candidate" class="auto internal xref">Section 5.4</a>) adds retrieval and
+evaluation of documents that are not in use. Should both be specified
+in this document, and is one candidate URL retrieved by the reporter
+the right model? Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11">issue
+11</a>.<a href="#appendix-A-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-3.2">
+          <p id="appendix-A-3.2.1">Reporting before first acceptance. A reporter cannot report problems
 with a Client Identifier URL for which it has never accepted a
 document, including its first retrieval (<a href="#establishing" class="auto internal xref">Section 4.1</a>), although
 this is when publishers most need feedback. Should a document that
 the reporter does not accept, but that passes the
 <code>document_structure</code> check, be able to supply a collector for reports
 about its own rejection? Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/1">issue
-#1</a>.<a href="#appendix-A-3.1.1" class="pilcrow">¶</a></p>
+1</a>.<a href="#appendix-A-3.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="appendix-A-3.2">
-          <p id="appendix-A-3.2.1">Cross-origin collectors. The same-origin requirement (<a href="#metadata" class="auto internal xref">Section 4</a>)
+        <li id="appendix-A-3.3">
+          <p id="appendix-A-3.3.1">Collector authorization. The same-origin requirement (<a href="#metadata" class="auto internal xref">Section 4</a>)
 prevents publishers that serve their document from static hosting
 from receiving reports, and on a shared origin it does not establish
 that the recipient consents (<a href="#shared-origins" class="auto internal xref">Section 9.3</a>). What mechanism
 should let a collector authorize the reports it receives? Tracked as
 <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/2">issue
-#2</a>.<a href="#appendix-A-3.2.1" class="pilcrow">¶</a></p>
+2</a>.<a href="#appendix-A-3.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="appendix-A-3.3">
-          <p id="appendix-A-3.3.1">Conditional requests. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> treats every status code
+        <li id="appendix-A-3.4">
+          <p id="appendix-A-3.4.1">Conditional requests. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> treats every status code
 other than 200 as an error, while <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6.2" class="relref">Section 6.2</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> recommends
 HTTP caching, which implies revalidation with 304 responses. This
 document defines 304 handling only for candidate retrieval
 (<a href="#digest" class="auto internal xref">Section 5.5</a>); the rule for active documents needs coordination with
 <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/9">issue
-#9</a>.<a href="#appendix-A-3.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-3.4">
-          <p id="appendix-A-3.4.1">Scope of candidate evaluation. Does candidate evaluation
-(<a href="#candidate" class="auto internal xref">Section 5.4</a>) provide enough beyond authorization server metadata
-to justify its complexity, and should it be specified separately from
-active document reporting? Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11">issue
-#11</a>.<a href="#appendix-A-3.4.1" class="pilcrow">¶</a></p>
+9</a>.<a href="#appendix-A-3.4.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 </section>
