@@ -77,6 +77,50 @@ authorization server processes OAuth requests, and neither a report nor
 its absence establishes that a client is authorized or that a metadata
 change is safe to deploy.
 
+--- to_be_removed_note_Open_Issues
+
+The following questions are open. Each is tracked as an issue in the
+[GitHub repository](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues),
+where discussion is welcome.
+
+* Reporting before first acceptance (#1): should a document that the
+  reporter does not accept be able to name a collector for reports about
+  its own rejection?
+
+* Cross-origin collectors (#2): what mechanism would let a collector on
+  another origin, or on a shared origin, authorize the reports it
+  receives?
+
+* Reporter authentication (#3): should reports be signed, given that some
+  reporters prefer not to identify themselves?
+
+* Advertising support (#4): should authorization servers advertise
+  reporting support in their metadata?
+
+* Operational parameters (#5): are the report size limit, delivery window,
+  reporting period, candidate report interval, and configuration
+  retention period right?
+
+* Granularity of results (#6): how much should reason codes disclose about
+  a reporter's policy?
+
+* Request-level reports (#7): should a later version report request-time
+  failures attributable to metadata?
+
+* Referenced resources (#8): should reports carry digests of resources,
+  such as a JWK Set, that an evaluation used?
+
+* Conditional requests (#9): how should a 304 response be treated for
+  active documents, given that Section 6 of {{CIMD}} treats every status
+  code other than 200 as an error?
+
+* Applicability (#10): should reporting extend to clients registered
+  through Dynamic Client Registration or to software statements?
+
+* Candidate evaluation (#11): does it justify its complexity, should it be
+  specified separately, and is one candidate URL retrieved by the
+  reporter the right model?
+
 --- middle
 
 # Introduction {#intro}
@@ -955,7 +999,7 @@ origins can restrict the values that publishers use for these members,
 for example to URLs under the path of the publisher's own document. A
 mechanism by which collectors authorize reports, such as the external
 destination verification of DMARC ({{Section 4 of RFC9990}}), would
-address this as well ({{issues}}).
+address this as well.
 
 ## Forged Reports {#forged}
 
@@ -1223,90 +1267,6 @@ the Specification Document is {{reasons}} of this specification.
 {: #tab-reasons title="Initial Reason Codes"}
 
 --- back
-
-# Open Issues {#issues}
-
-This section lists questions on which the author seeks working group
-input. It will be removed before publication.
-
-1. Reporting before first acceptance. Problems with a Client Identifier
-   URL for which an authorization server has never accepted a document,
-   including its first retrieval, cannot be reported
-   ({{establishing}}), although this is when publishers most need
-   feedback. Should a document that the reporter does not accept, but
-   that passes the `document_structure` check including the `client_id`
-   match, be able to supply a collector for reports about its own
-   rejection? Establishing permission to report could have different
-   requirements from accepting metadata for OAuth use.
-
-2. Cross-origin collectors. The same-origin requirement ({{metadata}})
-   prevents publishers that serve their document from static hosting
-   from receiving reports. Allowing other origins requires an
-   authorization mechanism to prevent reports from being directed at
-   third parties; DMARC external destination verification
-   ({{Section 4 of RFC9990}}) is one precedent, and a well-known
-   resource at the collector's origin is another. Because the same
-   origin does not establish consent on shared origins
-   ({{shared-origins}}), such a mechanism could apply to same-origin
-   collectors as well.
-
-3. Reporter authentication. Reports are unauthenticated ({{forged}}).
-   Reporters could sign delivery requests with HTTP Message Signatures
-   {{RFC9421}} using keys published in their authorization server
-   metadata, or sign reports as JWS objects. Either conflicts with
-   reporters that prefer not to identify themselves
-   ({{relationships}}).
-
-4. Advertising support. Authorization servers could advertise support
-   for reporting in their authorization server metadata, as
-   {{Section 8 of CIMD}} does for Client ID Metadata Documents. This
-   would let publishers distinguish non-participation from absence of
-   problems, but it would not make silence meaningful
-   ({{interpreting}}).
-
-5. Operational parameters. The 16384-octet report limit, the 24-hour
-   delivery window, the one-hour minimum reporting period, the 24-hour
-   candidate report interval, and the 7-day retention of reporting
-   configuration ({{establishing}}) need validation against deployment
-   experience.
-
-6. Granularity of results. More specific reason codes help publishers
-   but disclose more of the reporter's policy ({{oracle}}). Should
-   `metadata_policy` results be able to reference a reporter-published
-   policy document?
-
-7. Request-level reports. Publishers would benefit from reports of
-   request-time failures attributable to metadata, such as an
-   unregistered `redirect_uri` or a client authentication failure.
-   These raise privacy and volume questions that document reports
-   avoid, and are excluded from this version ({{scope}}).
-
-8. Referenced resources. A document digest does not identify the
-   resources an evaluation used, such as a JWK Set ({{interpreting}}).
-   Reports could carry digests of referenced resources if diagnosing
-   key changes proves to be a central use.
-
-9. Conditional requests. {{Section 6 of CIMD}} treats every status code
-   other than 200 as an error, while {{Section 6.2 of CIMD}} recommends
-   HTTP caching, which implies revalidation with 304 responses. This
-   draft defines 304 handling only for candidate retrieval and otherwise
-   defers to the reporter's processing under CIMD ({{digest}},
-   {{establishing}}); the rule for active documents needs coordination
-   with {{CIMD}}.
-
-10. Applicability beyond Client ID Metadata Documents. Should a later
-    version define how reporting configuration is established for
-    clients registered through Dynamic Client Registration {{RFC7591}},
-    or for metadata carried in a software statement
-    ({{Section 4.3 of CIMD}})?
-
-11. Candidate evaluation. This version supports one candidate URL,
-    retrieved by the reporter. Alternatives include several candidates
-    for staged rollouts and a push model in which the publisher submits
-    candidates to authorization servers. The working group should also
-    consider whether candidate evaluation provides enough beyond
-    authorization server metadata to justify its complexity and, if so,
-    whether to specify it separately from active document reporting.
 
 # Document History {#history}
 {:removeinrfc}
