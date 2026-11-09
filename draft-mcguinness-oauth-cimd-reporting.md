@@ -95,8 +95,10 @@ not permitted by local policy, the failure is visible to the end user
 and to the operator of that authorization server. The publisher of the
 document is not informed. A change to the document can therefore cause
 the client to fail at authorization servers that the publisher cannot
-observe, and the publisher cannot test a proposed change against those
-servers before deploying it.
+observe. Publishers can arrange tests with authorization servers they
+know, but there is no standardized way to obtain feedback on a document,
+or on a proposed change, from independently operated authorization
+servers.
 
 This specification defines two optional functions that an
 authorization server can perform for a client that requests them:
@@ -107,6 +109,12 @@ authorization server can perform for a client that requests them:
 2. Evaluating a candidate document, which is a proposed replacement
    served at a separate URL, and reporting the results without applying
    the candidate to any OAuth request.
+
+This version primarily supports diagnosing problems with metadata that
+authorization servers have previously accepted, and evaluating proposed
+changes at participating authorization servers. Failures at an
+authorization server's first contact with a client are not reported
+({{establishing}}).
 
 Both functions retain one active document for each Client Identifier
 URL; serving a document at the Client Identifier URL remains the only
@@ -265,9 +273,9 @@ use in a Client ID Metadata Document:
 
 The value of each member MUST be an absolute URL that uses the `https`
 scheme, has the same origin ({{Section 5 of RFC6454}}) as the Client
-Identifier URL, and has no fragment component. Origin comparison differs
-from the simple string comparison that {{Section 3 of CIMD}} requires
-for Client Identifier URLs: for example,
+Identifier URL, and has no userinfo or fragment component. Origin
+comparison differs from the simple string comparison that
+{{Section 3 of CIMD}} requires for Client Identifier URLs: for example,
 `https://client.example:443/reports` has the same origin as the Client
 Identifier URL `https://client.example/oauth/client.json`. A reporter
 MUST treat a member whose value does not meet the requirements of this
@@ -458,6 +466,16 @@ failures as `retrieval` results that name the referencing member, in
 the report for the digest of the document that references them.
 
 ## Candidate Document Evaluation {#candidate}
+
+Authorization server metadata {{RFC8414}} advertises capabilities such
+as supported grant types and client authentication methods, which a
+publisher can check without this specification. Candidate evaluation
+adds the result of the reporter's actual processing and of its
+client-specific policy, which metadata does not convey. For example, a
+proposed redirect URI on another origin can pass the publisher's own
+validation and match every advertised capability, yet violate a
+reporter's policy that restricts redirect URIs to the origin of the
+Client Identifier URL ({{Section 4.4 of CIMD}}).
 
 A reporter MAY evaluate the candidate document named by its reporting
 configuration, for example after it establishes reporting configuration
@@ -672,10 +690,12 @@ A result that names a member applies only to that member or, for the
 `retrieval` check, to the resource that member identifies. A result that
 names no member applies to the document as a whole. For the `retrieval`
 check, it describes retrieval of the document itself. For other checks,
-an `incompatible` or `indeterminate` result that names no member
-describes a problem without identifying a member, and a `compatible`
-result that names no member states that the check found no problem other
-than those reported in results that name members.
+a `compatible` result that names no member states that the check found
+no problem, and an `incompatible` or `indeterminate` result that names
+no member describes a problem without identifying a member. Except for
+the `retrieval` check, the results of one evaluation MUST NOT include
+both a `compatible` result that names no member and another result for
+the same check.
 
 ## Active Document Reports {#active-reports}
 
@@ -698,9 +718,12 @@ reporter performed it.
 
 ## Candidate Reports {#candidate-reports}
 
-A candidate report describes one evaluation of a candidate document. It
+A candidate report describes one evaluation of a candidate document and
 contains at least one result for each check defined in this
-specification, including results with the outcome `compatible`. A
+specification. For a check that found no problem, the report contains a
+`compatible` result that names no member. If every result for a check
+names a member, the members that no result for that check names had no
+problem under that check. A
 reporter that does not perform one of those checks, by local policy or
 because an earlier check failed, reports it with the outcome
 `indeterminate` and the reason `not_evaluated`. For example, after a
@@ -721,10 +744,15 @@ through registered check and reason values rather than free-form text.
 The following example shows a report of an evaluation of the candidate
 document in {{fig-candidate}}. The reporter does not support the device
 authorization grant, and its policy restricts redirect URIs to the
-origin of the Client Identifier URL. The `compatible` results that name
-no member state that those checks found no other problem. The digest is
-computed over the octets of the document exactly as shown in
-{{fig-candidate}}, with LF line endings and no trailing line break.
+origin of the Client Identifier URL. The unsupported device
+authorization grant does not by itself prevent use of the client,
+because the reporter uses the intersection of the declared and supported
+grant types ({{Section 6 of CIMD}}); the result tells the publisher that
+the grant type will not be available. Because every result for the
+`supported_values` and `metadata_policy` checks names a member, the
+other members had no problem under those checks. The digest is computed
+over the octets of the document exactly as shown in {{fig-candidate}},
+with LF line endings and no trailing line break.
 
 ~~~ json
 {
@@ -750,15 +778,13 @@ computed over the octets of the document exactly as shown in
       "outcome": "incompatible",
       "reason": "unsupported_value"
     },
-    {"check": "supported_values", "outcome": "compatible"},
     {
       "check": "metadata_policy",
       "member": "redirect_uris",
       "values": ["https://app.example.net/callback"],
       "outcome": "incompatible",
       "reason": "policy_violation"
-    },
-    {"check": "metadata_policy", "outcome": "compatible"}
+    }
   ]
 }
 ~~~
@@ -1029,10 +1055,11 @@ can use longer reporting periods or delay delivery.
 Candidate reports carry the same risk in a different form: a candidate
 report describes one evaluation, so if a reporter evaluates a candidate
 document immediately after an OAuth request causes it to retrieve the
-active document, the report's reporting period reveals when that
-request occurred. Reporters can evaluate candidate documents on a
-schedule independent of OAuth requests, or delay candidate reports.
-Reports carry no end-user identifiers ({{content}}).
+active document, the report's reporting period reveals when that request
+occurred. Reporters can evaluate candidate documents on a schedule
+independent of OAuth requests, or report a coarser reporting period that
+contains the evaluation; delaying delivery alone does not conceal the
+reporting period. Reports carry no end-user identifiers ({{content}}).
 
 # IANA Considerations {#iana}
 
@@ -1227,40 +1254,45 @@ the Specification Document is {{reasons}} of this specification.
 # Open Issues {#issues}
 {:removeinrfc}
 
-The following questions affect the mechanism this document defines.
-Other open questions are tracked in the [issue
+The following questions determine the scope and deployment model of the
+mechanism this document defines, and are listed in the order in which
+the author suggests the working group discuss them. Other open
+questions, including operational parameters and reporter authentication,
+are tracked in the [issue
 tracker](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues).
 
-1. Reporting before first acceptance. A reporter cannot report problems
+1. Combining active reporting and candidate evaluation. Active document
+   reporting records the results of processing that a reporter already
+   performs; candidate evaluation ({{candidate}}) adds retrieval and
+   evaluation of documents that are not in use. Should both be specified
+   in this document, and is one candidate URL retrieved by the reporter
+   the right model? Tracked as [issue
+   11](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11).
+
+2. Reporting before first acceptance. A reporter cannot report problems
    with a Client Identifier URL for which it has never accepted a
    document, including its first retrieval ({{establishing}}), although
    this is when publishers most need feedback. Should a document that
    the reporter does not accept, but that passes the
    `document_structure` check, be able to supply a collector for reports
    about its own rejection? Tracked as [issue
-   #1](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/1).
+   1](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/1).
 
-2. Cross-origin collectors. The same-origin requirement ({{metadata}})
+3. Collector authorization. The same-origin requirement ({{metadata}})
    prevents publishers that serve their document from static hosting
    from receiving reports, and on a shared origin it does not establish
    that the recipient consents ({{shared-origins}}). What mechanism
    should let a collector authorize the reports it receives? Tracked as
    [issue
-   #2](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/2).
+   2](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/2).
 
-3. Conditional requests. {{Section 6 of CIMD}} treats every status code
+4. Conditional requests. {{Section 6 of CIMD}} treats every status code
    other than 200 as an error, while {{Section 6.2 of CIMD}} recommends
    HTTP caching, which implies revalidation with 304 responses. This
    document defines 304 handling only for candidate retrieval
    ({{digest}}); the rule for active documents needs coordination with
    {{CIMD}}. Tracked as [issue
-   #9](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/9).
-
-4. Scope of candidate evaluation. Does candidate evaluation
-   ({{candidate}}) provide enough beyond authorization server metadata
-   to justify its complexity, and should it be specified separately from
-   active document reporting? Tracked as [issue
-   #11](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11).
+   9](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/9).
 
 # Document History {#history}
 {:removeinrfc}
