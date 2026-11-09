@@ -1115,6 +1115,66 @@ change is safe to deploy.<a href="#section-abstract-1" class="pilcrow">¶</a></p
 <p id="section-note.1-4">Source for this draft and an issue tracker can be found at
         <span><a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting">https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
 </section>
+<section class="note rfcEditorRemove" id="section-note.2">
+      <h2 id="name-open-issues">
+<a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
+      </h2>
+<p id="section-note.2-1">This note is to be removed before publishing as an RFC.<a href="#section-note.2-1" class="pilcrow">¶</a></p>
+<p id="section-note.2-2">The following questions are open. Each is tracked as an issue in the
+<a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues">GitHub repository</a>,
+where discussion is welcome.<a href="#section-note.2-2" class="pilcrow">¶</a></p>
+<ul class="normal note rfcEditorRemove">
+<li class="normal note rfcEditorRemove" id="section-note.2-3.1">
+          <p id="section-note.2-3.1.1">Reporting before first acceptance (#1): should a document that the
+reporter does not accept be able to name a collector for reports about
+its own rejection?<a href="#section-note.2-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.2">
+          <p id="section-note.2-3.2.1">Cross-origin collectors (#2): what mechanism would let a collector on
+another origin, or on a shared origin, authorize the reports it
+receives?<a href="#section-note.2-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.3">
+          <p id="section-note.2-3.3.1">Reporter authentication (#3): should reports be signed, given that some
+reporters prefer not to identify themselves?<a href="#section-note.2-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.4">
+          <p id="section-note.2-3.4.1">Advertising support (#4): should authorization servers advertise
+reporting support in their metadata?<a href="#section-note.2-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.5">
+          <p id="section-note.2-3.5.1">Operational parameters (#5): are the report size limit, delivery window,
+reporting period, candidate report interval, and configuration
+retention period right?<a href="#section-note.2-3.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.6">
+          <p id="section-note.2-3.6.1">Granularity of results (#6): how much should reason codes disclose about
+a reporter's policy?<a href="#section-note.2-3.6.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.7">
+          <p id="section-note.2-3.7.1">Request-level reports (#7): should a later version report request-time
+failures attributable to metadata?<a href="#section-note.2-3.7.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.8">
+          <p id="section-note.2-3.8.1">Referenced resources (#8): should reports carry digests of resources,
+such as a JWK Set, that an evaluation used?<a href="#section-note.2-3.8.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.9">
+          <p id="section-note.2-3.9.1">Conditional requests (#9): how should a 304 response be treated for
+active documents, given that Section 6 of <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> treats every status
+code other than 200 as an error?<a href="#section-note.2-3.9.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.10">
+          <p id="section-note.2-3.10.1">Applicability (#10): should reporting extend to clients registered
+through Dynamic Client Registration or to software statements?<a href="#section-note.2-3.10.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal note rfcEditorRemove" id="section-note.2-3.11">
+          <p id="section-note.2-3.11.1">Candidate evaluation (#11): does it justify its complexity, should it be
+specified separately, and is one candidate URL retrieved by the
+reporter the right model?<a href="#section-note.2-3.11.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
         <h2 id="name-status-of-this-memo">
@@ -1332,13 +1392,10 @@ change is safe to deploy.<a href="#section-abstract-1" class="pilcrow">¶</a></p
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
-            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-open-issues" class="internal xref">Open Issues</a></p>
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
-            <p id="section-toc.1-1.15.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.14.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -2491,7 +2548,7 @@ origins can restrict the values that publishers use for these members,
 for example to URLs under the path of the publisher's own document. A
 mechanism by which collectors authorize reports, such as the external
 destination verification of DMARC (<span><a href="https://rfc-editor.org/rfc/rfc9990#section-4" class="relref">Section 4</a> of [<a href="#RFC9990" class="cite xref">RFC9990</a>]</span>), would
-address this as well (<a href="#issues" class="auto internal xref">Appendix A</a>).<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+address this as well.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="forged">
@@ -3152,123 +3209,22 @@ the Specification Document is <a href="#reasons" class="auto internal xref">Sect
 </div>
 </section>
 </div>
-<div id="issues">
-<section id="appendix-A">
-      <h2 id="name-open-issues">
-<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
-      </h2>
-<p id="appendix-A-1">This section lists questions on which the author seeks working group
-input. It will be removed before publication.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="appendix-A-2">
-<li id="appendix-A-2.1">
-          <p id="appendix-A-2.1.1">Reporting before first acceptance. Problems with a Client Identifier
-URL for which an authorization server has never accepted a document,
-including its first retrieval, cannot be reported
-(<a href="#establishing" class="auto internal xref">Section 4.1</a>), although this is when publishers most need
-feedback. Should a document that the reporter does not accept, but
-that passes the <code>document_structure</code> check including the <code>client_id</code>
-match, be able to supply a collector for reports about its own
-rejection? Establishing permission to report could have different
-requirements from accepting metadata for OAuth use.<a href="#appendix-A-2.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.2">
-          <p id="appendix-A-2.2.1">Cross-origin collectors. The same-origin requirement (<a href="#metadata" class="auto internal xref">Section 4</a>)
-prevents publishers that serve their document from static hosting
-from receiving reports. Allowing other origins requires an
-authorization mechanism to prevent reports from being directed at
-third parties; DMARC external destination verification
-(<span><a href="https://rfc-editor.org/rfc/rfc9990#section-4" class="relref">Section 4</a> of [<a href="#RFC9990" class="cite xref">RFC9990</a>]</span>) is one precedent, and a well-known
-resource at the collector's origin is another. Because the same
-origin does not establish consent on shared origins
-(<a href="#shared-origins" class="auto internal xref">Section 9.3</a>), such a mechanism could apply to same-origin
-collectors as well.<a href="#appendix-A-2.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.3">
-          <p id="appendix-A-2.3.1">Reporter authentication. Reports are unauthenticated (<a href="#forged" class="auto internal xref">Section 9.4</a>).
-Reporters could sign delivery requests with HTTP Message Signatures
-<span>[<a href="#RFC9421" class="cite xref">RFC9421</a>]</span> using keys published in their authorization server
-metadata, or sign reports as JWS objects. Either conflicts with
-reporters that prefer not to identify themselves
-(<a href="#relationships" class="auto internal xref">Section 10.1</a>).<a href="#appendix-A-2.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.4">
-          <p id="appendix-A-2.4.1">Advertising support. Authorization servers could advertise support
-for reporting in their authorization server metadata, as
-<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-8" class="relref">Section 8</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> does for Client ID Metadata Documents. This
-would let publishers distinguish non-participation from absence of
-problems, but it would not make silence meaningful
-(<a href="#interpreting" class="auto internal xref">Section 8</a>).<a href="#appendix-A-2.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.5">
-          <p id="appendix-A-2.5.1">Operational parameters. The 16384-octet report limit, the 24-hour
-delivery window, the one-hour minimum reporting period, the 24-hour
-candidate report interval, and the 7-day retention of reporting
-configuration (<a href="#establishing" class="auto internal xref">Section 4.1</a>) need validation against deployment
-experience.<a href="#appendix-A-2.5.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.6">
-          <p id="appendix-A-2.6.1">Granularity of results. More specific reason codes help publishers
-but disclose more of the reporter's policy (<a href="#oracle" class="auto internal xref">Section 9.5</a>). Should
-<code>metadata_policy</code> results be able to reference a reporter-published
-policy document?<a href="#appendix-A-2.6.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.7">
-          <p id="appendix-A-2.7.1">Request-level reports. Publishers would benefit from reports of
-request-time failures attributable to metadata, such as an
-unregistered <code>redirect_uri</code> or a client authentication failure.
-These raise privacy and volume questions that document reports
-avoid, and are excluded from this version (<a href="#scope" class="auto internal xref">Section 1.1</a>).<a href="#appendix-A-2.7.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.8">
-          <p id="appendix-A-2.8.1">Referenced resources. A document digest does not identify the
-resources an evaluation used, such as a JWK Set (<a href="#interpreting" class="auto internal xref">Section 8</a>).
-Reports could carry digests of referenced resources if diagnosing
-key changes proves to be a central use.<a href="#appendix-A-2.8.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.9">
-          <p id="appendix-A-2.9.1">Conditional requests. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> treats every status code
-other than 200 as an error, while <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6.2" class="relref">Section 6.2</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> recommends
-HTTP caching, which implies revalidation with 304 responses. This
-draft defines 304 handling only for candidate retrieval and otherwise
-defers to the reporter's processing under CIMD (<a href="#digest" class="auto internal xref">Section 5.5</a>,
-<a href="#establishing" class="auto internal xref">Section 4.1</a>); the rule for active documents needs coordination
-with <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#appendix-A-2.9.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.10">
-          <p id="appendix-A-2.10.1">Applicability beyond Client ID Metadata Documents. Should a later
-version define how reporting configuration is established for
-clients registered through Dynamic Client Registration <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>,
-or for metadata carried in a software statement
-(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.3" class="relref">Section 4.3</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>)?<a href="#appendix-A-2.10.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="appendix-A-2.11">
-          <p id="appendix-A-2.11.1">Candidate evaluation. This version supports one candidate URL,
-retrieved by the reporter. Alternatives include several candidates
-for staged rollouts and a push model in which the publisher submits
-candidates to authorization servers. The working group should also
-consider whether candidate evaluation provides enough beyond
-authorization server metadata to justify its complexity and, if so,
-whether to specify it separately from active document reporting.<a href="#appendix-A-2.11.1" class="pilcrow">¶</a></p>
-</li>
-      </ol>
-</section>
-</div>
 <div id="history">
-<section id="appendix-B">
+<section id="appendix-A">
       <h2 id="name-document-history">
-<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-document-history" class="section-name selfRef">Document History</a>
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-document-history" class="section-name selfRef">Document History</a>
       </h2>
-<p id="appendix-B-1">This section is to be removed before publishing as an RFC.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
-<p id="appendix-B-2">-00<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">This section is to be removed before publishing as an RFC.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">-00<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="appendix-B-3.1">
-          <p id="appendix-B-3.1.1">Initial version.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="appendix-A-3.1">
+          <p id="appendix-A-3.1.1">Initial version.<a href="#appendix-A-3.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
 </div>
 <div id="authors-addresses">
-<section id="appendix-C">
+<section id="appendix-B">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>
