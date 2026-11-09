@@ -1,0 +1,3241 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>OAuth Client ID Metadata Document Reporting</title>
+<meta content="Karl McGuinness" name="author">
+<meta content="
+       This specification defines how an OAuth authorization server reports
+problems with a client's Client ID Metadata Document to the party that
+publishes it, and how it evaluates a candidate replacement document
+before the publisher serves that document at the client's Client
+Identifier URL. Each report describes the results of named checks and,
+when a document was obtained, identifies the exact document evaluated.
+Reporting is asynchronous and best effort. It does not change how the
+authorization server processes OAuth requests, and neither a report nor
+its absence establishes that a client is authorized or that a metadata
+change is safe to deploy. 
+    " name="description">
+<meta content="xml2rfc 3.35.0" name="generator">
+<meta content="OAuth" name="keyword">
+<meta content="client metadata" name="keyword">
+<meta content="Client ID Metadata Document" name="keyword">
+<meta content="reporting" name="keyword">
+<meta content="draft-mcguinness-oauth-cimd-reporting-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.35.0
+    Python 3.14.10
+    ConfigArgParse 1.9.0
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.14.3
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.9.4
+-->
+<link href="draft-mcguinness-oauth-cimd-reporting.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill], [fill] *)) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">CIMD Reporting</td>
+<td class="right">November 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">McGuinness</td>
+<td class="center">Expires 13 May 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Web Authorization Protocol</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-mcguinness-oauth-cimd-reporting-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-11-09" class="published">9 November 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-05-13">13 May 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">K. McGuinness</div>
+<div class="org">Independent</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">OAuth Client ID Metadata Document Reporting</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This specification defines how an OAuth authorization server reports
+problems with a client's Client ID Metadata Document to the party that
+publishes it, and how it evaluates a candidate replacement document
+before the publisher serves that document at the client's Client
+Identifier URL. Each report describes the results of named checks and,
+when a document was obtained, identifies the exact document evaluated.
+Reporting is asynchronous and best effort. It does not change how the
+authorization server processes OAuth requests, and neither a report nor
+its absence establishes that a client is authorized or that a metadata
+change is safe to deploy.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html">https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-mcguinness-oauth-cimd-reporting/">https://datatracker.ietf.org/doc/draft-mcguinness-oauth-cimd-reporting/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        Web Authorization Protocol Working Group mailing list (<span><a href="mailto:oauth@ietf.org">mailto:oauth@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/oauth/">https://mailarchive.ietf.org/arch/browse/oauth/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/oauth/">https://www.ietf.org/mailman/listinfo/oauth/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting">https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 13 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-scope" class="internal xref">Scope</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-protocol-overview" class="internal xref">Protocol Overview</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-independence-from-request-p" class="internal xref">Independence from Request Processing</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-client-metadata" class="internal xref">Client Metadata</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-establishing-reporting-conf" class="internal xref">Establishing Reporting Configuration</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-evaluation" class="internal xref">Evaluation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-checks-and-outcomes" class="internal xref">Checks and Outcomes</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-reason-codes" class="internal xref">Reason Codes</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-active-document-evaluation" class="internal xref">Active Document Evaluation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-candidate-document-evaluati" class="internal xref">Candidate Document Evaluation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
+                <p id="section-toc.1-1.5.2.5.1"><a href="#section-5.5" class="auto internal xref">5.5</a>.  <a href="#name-document-digest" class="internal xref">Document Digest</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-reports" class="internal xref">Reports</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-report-format" class="internal xref">Report Format</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-result-scope" class="internal xref">Result Scope</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-active-document-reports" class="internal xref">Active Document Reports</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-candidate-reports" class="internal xref">Candidate Reports</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-report-content-restrictions" class="internal xref">Report Content Restrictions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6">
+                <p id="section-toc.1-1.6.2.6.1"><a href="#section-6.6" class="auto internal xref">6.6</a>.  <a href="#name-examples" class="internal xref">Examples</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-report-delivery" class="internal xref">Report Delivery</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-delivery-request" class="internal xref">Delivery Request</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-response-handling" class="internal xref">Response Handling</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-limits" class="internal xref">Limits</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-interpreting-reports" class="internal xref">Interpreting Reports</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-reporting-and-authorization" class="internal xref">Reporting and Authorization Decisions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-request-amplification" class="internal xref">Request Amplification</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-shared-origins" class="internal xref">Shared Origins</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-forged-reports" class="internal xref">Forged Reports</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
+                <p id="section-toc.1-1.9.2.5.1"><a href="#section-9.5" class="auto internal xref">9.5</a>.  <a href="#name-candidate-evaluation-as-a-p" class="internal xref">Candidate Evaluation as a Policy Oracle</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.6">
+                <p id="section-toc.1-1.9.2.6.1"><a href="#section-9.6" class="auto internal xref">9.6</a>.  <a href="#name-document-version-confusion" class="internal xref">Document Version Confusion</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-privacy-considerations" class="internal xref">Privacy Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-disclosure-of-deployment-re" class="internal xref">Disclosure of Deployment Relationships</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-end-user-activity" class="internal xref">End-User Activity</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-oauth-dynamic-client-regist" class="internal xref">OAuth Dynamic Client Registration Metadata Registry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-media-type-registration" class="internal xref">Media Type Registration</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.3">
+                <p id="section-toc.1-1.11.2.3.1"><a href="#section-11.3" class="auto internal xref">11.3</a>.  <a href="#name-registration-procedures" class="internal xref">Registration Procedures</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.4">
+                <p id="section-toc.1-1.11.2.4.1"><a href="#section-11.4" class="auto internal xref">11.4</a>.  <a href="#name-oauth-client-metadata-repor" class="internal xref">OAuth Client Metadata Report Checks Registry</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.4.2.1">
+                    <p id="section-toc.1-1.11.2.4.2.1.1"><a href="#section-11.4.1" class="auto internal xref">11.4.1</a>.  <a href="#name-registration-template" class="internal xref">Registration Template</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.4.2.2">
+                    <p id="section-toc.1-1.11.2.4.2.2.1"><a href="#section-11.4.2" class="auto internal xref">11.4.2</a>.  <a href="#name-initial-registry-contents" class="internal xref">Initial Registry Contents</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.5">
+                <p id="section-toc.1-1.11.2.5.1"><a href="#section-11.5" class="auto internal xref">11.5</a>.  <a href="#name-oauth-client-metadata-report" class="internal xref">OAuth Client Metadata Report Reasons Registry</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.5.2.1">
+                    <p id="section-toc.1-1.11.2.5.2.1.1"><a href="#section-11.5.1" class="auto internal xref">11.5.1</a>.  <a href="#name-registration-template-2" class="internal xref">Registration Template</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.5.2.2">
+                    <p id="section-toc.1-1.11.2.5.2.2.1"><a href="#section-11.5.2" class="auto internal xref">11.5.2</a>.  <a href="#name-initial-registry-contents-2" class="internal xref">Initial Registry Contents</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref">12.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.2">
+                <p id="section-toc.1-1.12.2.2.1"><a href="#section-12.2" class="auto internal xref">12.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-open-issues" class="internal xref">Open Issues</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-document-history" class="internal xref">Document History</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="intro">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">An OAuth Client ID Metadata Document <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> allows a client to use an
+HTTPS URL as its client identifier. An authorization server retrieves
+the client's metadata from that URL (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>) and decides,
+according to its own supported values and policy, whether it can use
+that metadata. One document therefore serves every authorization server
+the client interacts with, and each of those servers can reach a
+different conclusion about it.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">When an authorization server cannot use the document, because
+retrieval fails, the document is invalid, or a value is unsupported or
+not permitted by local policy, the failure is visible to the end user
+and to the operator of that authorization server. The publisher of the
+document is not informed. A change to the document can therefore cause
+the client to fail at authorization servers that the publisher cannot
+observe, and the publisher cannot test a proposed change against those
+servers before deploying it.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This specification defines two optional functions that an
+authorization server can perform for a client that requests them:<a href="#section-1-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-1-4">
+<li id="section-1-4.1">
+          <p id="section-1-4.1.1">Reporting problems with the active document, which is the document
+served at the Client Identifier URL.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-4.2">
+          <p id="section-1-4.2.1">Evaluating a candidate document, which is a proposed replacement
+served at a separate URL, and reporting the results without applying
+the candidate to any OAuth request.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-1-5">Both functions retain one active document for each Client Identifier
+URL; serving a document at the Client Identifier URL remains the only
+way to change the client's metadata. Neither function changes how the
+authorization server processes OAuth requests (<a href="#independence" class="auto internal xref">Section 3.1</a>). The
+approach follows SMTP TLS Reporting <span>[<a href="#RFC8460" class="cite xref">RFC8460</a>]</span>, in which sending
+systems report failures to recipient domains that cannot otherwise
+observe them, as a companion to the specifications that define the
+policies themselves.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<div id="scope">
+<section id="section-1.1">
+        <h3 id="name-scope">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-scope" class="section-name selfRef">Scope</a>
+        </h3>
+<p id="section-1.1-1">This specification applies to clients identified by a Client
+Identifier URL <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. Establishing reporting configuration for
+clients registered by other means, such as Dynamic Client Registration
+<span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>, is out of scope. Reports describe Client ID Metadata
+Documents, not individual OAuth requests.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">This specification uses the terms "authorization server" and "client"
+defined in <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, and the terms "Client Identifier URL" and
+"Client ID Metadata Document" defined in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">This specification also defines the following terms:<a href="#section-2-3" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-4">
+        <dt id="section-2-4.1">publisher:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.2">
+          <p id="section-2-4.2.1">The party that controls the content served at a Client Identifier
+URL.<a href="#section-2-4.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.3">reporter:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.4">
+          <p id="section-2-4.4.1">An authorization server that evaluates Client ID Metadata Documents
+and delivers reports as described in this specification. Each
+authorization server with its own issuer identifier (<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>) is a
+separate reporter, even when several share an implementation or
+infrastructure.<a href="#section-2-4.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.5">collector:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.6">
+          <p id="section-2-4.6.1">The HTTPS endpoint to which a reporter delivers reports for a client.
+Its URL, the collector URL, is the value of the client's
+<code>client_metadata_report_uri</code> member.<a href="#section-2-4.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.7">active document:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.8">
+          <p id="section-2-4.8.1">The document served at a Client Identifier URL, as obtained by a
+reporter that retrieves that URL as described in
+<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>. Being active does not imply that the reporter
+accepts the document.<a href="#section-2-4.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.9">accept:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.10">
+          <p id="section-2-4.10.1">A reporter accepts an active document when it uses that document as
+the client's metadata to process OAuth requests, as described in
+<span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-2-4.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.11">candidate document:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.12">
+          <p id="section-2-4.12.1">A document that a reporter retrieves, solely for evaluation, from the
+candidate URL, which is the value of the client's
+<code>client_metadata_candidate_uri</code> member.<a href="#section-2-4.12.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.13">check:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.14">
+          <p id="section-2-4.14.1">A named test applied to a document, or to an attempt to retrieve a
+document or a resource it references, that produces an outcome
+(<a href="#checks" class="auto internal xref">Section 5.1</a>).<a href="#section-2-4.14.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.15">evaluation:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.16">
+          <p id="section-2-4.16.1">The application of one or more checks to one retrieval of a document.<a href="#section-2-4.16.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.17">result:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.18">
+          <p id="section-2-4.18.1">The outcome of one check, optionally scoped to one member of the
+document, as recorded by a reporter and conveyed in a report
+(<a href="#format" class="auto internal xref">Section 6.1</a>).<a href="#section-2-4.18.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.19">reporting period:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.20">
+          <p id="section-2-4.20.1">The interval, chosen by the reporter, in which it observed the
+results that a report contains.<a href="#section-2-4.20.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.21">reporting configuration:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.22">
+          <p id="section-2-4.22.1">The collector URL, and the candidate URL if any, that a reporter has
+established for a Client Identifier URL (<a href="#establishing" class="auto internal xref">Section 4.1</a>).<a href="#section-2-4.22.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="overview">
+<section id="section-3">
+      <h2 id="name-protocol-overview">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
+      </h2>
+<p id="section-3-1"><a href="#fig-overview" class="auto internal xref">Figure 1</a> shows the interactions this specification adds to the
+retrieval of a Client ID Metadata Document. The active document, the
+candidate document, and the collector are all on the origin of the
+Client Identifier URL.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<span id="name-reporting-and-candidate-eva"></span><div id="fig-overview">
+<figure id="figure-1">
+        <div class="alignLeft art-ascii-art art-text artwork" id="section-3-2.1">
+<pre>
+  Publisher                  Reporter                   Collector
+      |                          |                          |
+      |   (A) GET Client Identifier URL                     |
+      |&lt;-------------------------|                          |
+      |   active document        |                          |
+      |-------------------------&gt;|                          |
+      |                          | accept; establish        |
+      |                          | reporting configuration  |
+      |                          |                          |
+      |   (B) GET candidate URL (asynchronous)              |
+      |&lt;-------------------------|                          |
+      |   candidate document     |                          |
+      |-------------------------&gt;|                          |
+      |                          | evaluate                 |
+      |                          |                          |
+      |                          |   (C) POST report        |
+      |                          |-------------------------&gt;|
+      |                          |   2xx                    |
+      |                          |&lt;-------------------------|
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-reporting-and-candidate-eva" class="selfRef">Reporting and Candidate Evaluation</a>
+        </figcaption></figure>
+</div>
+<p id="section-3-3">(A) The reporter retrieves and processes the active document as
+    specified in <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. If the reporter accepts the document and the
+    document requests reporting, the reporter establishes reporting
+    configuration (<a href="#establishing" class="auto internal xref">Section 4.1</a>).<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">(B) If the reporting configuration includes a candidate URL, the
+    reporter can retrieve and evaluate the candidate document outside
+    the processing of any OAuth request (<a href="#candidate" class="auto internal xref">Section 5.4</a>).<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">(C) The reporter delivers reports about the active document, the
+    candidate document, or both, to the collector (<a href="#delivery" class="auto internal xref">Section 7</a>).<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">A publisher can use candidate evaluation to stage a change: serve the
+proposed document at the candidate URL and name that URL in the active
+document; review candidate reports that carry the proposed document's
+digest; serve the proposed document at the Client Identifier URL; and
+then review active document reports that carry the new digest.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<div id="independence">
+<section id="section-3.1">
+        <h3 id="name-independence-from-request-p">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-independence-from-request-p" class="section-name selfRef">Independence from Request Processing</a>
+        </h3>
+<p id="section-3.1-1">A reporter <span class="bcp14">MUST</span> determine the outcome of an OAuth request independently
+of whether reporting or candidate evaluation is enabled, succeeds, or
+fails. The members defined in <a href="#metadata" class="auto internal xref">Section 4</a>, any candidate document, the
+collector, and any report have no effect on whether the reporter
+accepts the active document, on client authentication, or on any other
+authorization decision.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">Candidate retrieval, candidate evaluation, and report delivery <span class="bcp14">MUST NOT</span>
+delay the response to an OAuth request.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="metadata">
+<section id="section-4">
+      <h2 id="name-client-metadata">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-client-metadata" class="section-name selfRef">Client Metadata</a>
+      </h2>
+<p id="section-4-1">This specification defines the following client metadata members for
+use in a Client ID Metadata Document:<a href="#section-4-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-4-2">
+        <dt id="section-4-2.1">
+<code>client_metadata_report_uri</code>:</dt>
+        <dd style="margin-left: 1.5em" id="section-4-2.2">
+          <p id="section-4-2.2.1"><span class="bcp14">OPTIONAL</span>. URL of the collector to which reporters deliver reports
+about this client's metadata.<a href="#section-4-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-4-2.3">
+<code>client_metadata_candidate_uri</code>:</dt>
+        <dd style="margin-left: 1.5em" id="section-4-2.4">
+          <p id="section-4-2.4.1"><span class="bcp14">OPTIONAL</span>. URL of a candidate document that the publisher asks
+reporters to evaluate. This URL <span class="bcp14">MUST NOT</span> be identical, under simple
+string comparison, to the Client Identifier URL. A reporter <span class="bcp14">MUST</span>
+ignore this member if <code>client_metadata_report_uri</code> is absent.<a href="#section-4-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-4-3">The value of each member <span class="bcp14">MUST</span> be an absolute URL that uses the <code>https</code>
+scheme, has the same origin (<span><a href="https://rfc-editor.org/rfc/rfc6454#section-5" class="relref">Section 5</a> of [<a href="#RFC6454" class="cite xref">RFC6454</a>]</span>) as the Client
+Identifier URL, and has no fragment component. Origin comparison differs
+from the simple string comparison that <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-3" class="relref">Section 3</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> requires
+for Client Identifier URLs: for example,
+<code>https://client.example:443/reports</code> has the same origin as the Client
+Identifier URL <code>https://client.example/oauth/client.json</code>. A reporter
+<span class="bcp14">MUST</span> treat a member whose value does not meet the requirements of this
+section as absent.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-4"><span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> applies to requests that a reporter makes to
+these URLs as it applies to any URL contained in a Client ID Metadata
+Document. An authorization server that does not implement this
+specification is expected to ignore both members, consistent with the
+treatment of client metadata that an authorization server does not
+understand in <span><a href="https://rfc-editor.org/rfc/rfc7591#section-2" class="relref">Section 2</a> of [<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>.<a href="#section-4-4" class="pilcrow">¶</a></p>
+<p id="section-4-5">The following is an example of a Client ID Metadata Document that
+requests reporting and candidate evaluation:<a href="#section-4-5" class="pilcrow">¶</a></p>
+<span id="name-example-active-document"></span><div id="fig-active">
+<figure id="figure-2">
+        <div class="lang-json sourcecode" id="section-4-6.1">
+<pre>
+{
+  "client_id": "https://client.example/oauth/client.json",
+  "client_name": "Example Client",
+  "redirect_uris": ["https://client.example/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "client_metadata_report_uri":
+    "https://client.example/oauth/reports",
+  "client_metadata_candidate_uri":
+    "https://client.example/oauth/client-next.json"
+}
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-example-active-document" class="selfRef">Example Active Document</a>
+        </figcaption></figure>
+</div>
+<div id="establishing">
+<section id="section-4.1">
+        <h3 id="name-establishing-reporting-conf">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-establishing-reporting-conf" class="section-name selfRef">Establishing Reporting Configuration</a>
+        </h3>
+<p id="section-4.1-1">A reporter establishes reporting configuration for a Client Identifier
+URL when it accepts an active document that contains a
+<code>client_metadata_report_uri</code> member and local policy permits reporting
+for that client. A reporter has at most one reporting configuration for
+each Client Identifier URL.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">When the reporter accepts a later active document, it <span class="bcp14">MUST</span> replace the
+reporting configuration with the values from that document, or discard
+the reporting configuration if that document has no
+<code>client_metadata_report_uri</code> member.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<p id="section-4.1-3">A reporter <span class="bcp14">MUST NOT</span> establish or change reporting configuration from an
+active document that it does not accept, or from a candidate document.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+<p id="section-4.1-4">If retrieval of the active document fails, or the reporter does not
+accept a later active document, the reporter <span class="bcp14">MAY</span> use the established
+reporting configuration to report either failure.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.1-5">A reporter confirms an accepted active document when it retrieves the
+Client Identifier URL and accepts the document obtained, including when
+its processing under <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span> treats a 304 (Not Modified) response as
+validating a cached document that it accepts. Using cached metadata
+without retrieving the Client Identifier URL is not a confirmation. A
+reporter <span class="bcp14">MUST</span> discard reporting configuration 7 days after its last
+confirmation of an accepted active document for that Client Identifier
+URL. This period is independent of how long the reporter caches client
+metadata (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6.2" class="relref">Section 6.2</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>), so that a failed retrieval after
+cached metadata expires remains reportable.<a href="#section-4.1-5" class="pilcrow">¶</a></p>
+<p id="section-4.1-6">A reporter records results for a client only while it has reporting
+configuration for that client, and associates each result with the
+collector URL in that configuration when it records the result. A
+reporter that has never accepted a document for a Client Identifier URL
+has no reporting configuration for it, so problems with that URL,
+including failures of its first retrieval, are not reported.<a href="#section-4.1-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="evaluation">
+<section id="section-5">
+      <h2 id="name-evaluation">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-evaluation" class="section-name selfRef">Evaluation</a>
+      </h2>
+<div id="checks">
+<section id="section-5.1">
+        <h3 id="name-checks-and-outcomes">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-checks-and-outcomes" class="section-name selfRef">Checks and Outcomes</a>
+        </h3>
+<p id="section-5.1-1">An evaluation applies one or more checks. This specification defines
+the following checks; <a href="#iana-checks" class="auto internal xref">Section 11.4</a> establishes a registry for
+additional checks.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.1-2">
+          <dt id="section-5.1-2.1">
+<code>retrieval</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-2.2">
+            <p id="section-5.1-2.2.1">Whether the reporter obtained the document (<a href="#digest" class="auto internal xref">Section 5.5</a>) by retrieving
+it as described in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>, within the size limit it
+applies (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.11" class="relref">Section 10.11</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>). A <code>retrieval</code> result that names a
+member describes retrieval of the resource that member identifies,
+such as the JWK Set at <code>jwks_uri</code>.<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.1-2.3">
+<code>document_structure</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-2.4">
+            <p id="section-5.1-2.4.1">Whether the document is a JSON object <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span> whose content meets
+the requirements of <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4" class="relref">Section 4</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>, as modified for candidate
+documents by <a href="#candidate" class="auto internal xref">Section 5.4</a>. This includes the restrictions in
+<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.1" class="relref">Section 4.1</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> and the syntax that each member's definition
+requires.<a href="#section-5.1-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.1-2.5">
+<code>supported_values</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-2.6">
+            <p id="section-5.1-2.6.1">Whether the reporter implements, for any client, the values of the
+members it processes, such as <code>grant_types</code> and <code>response_types</code>
+(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>) and <code>token_endpoint_auth_method</code>. For an
+array-valued member, the check fails if the reporter does not support
+one or more of its values, even when the reporter uses the remaining
+values.<a href="#section-5.1-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.1-2.7">
+<code>metadata_policy</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-2.8">
+            <p id="section-5.1-2.8.1">Whether the reporter permits the metadata for this client under
+policy beyond the requirements of <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>, for example a requirement
+that clients be confidential, or a restriction of <code>redirect_uris</code> to
+the origin of the Client Identifier URL (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.4" class="relref">Section 4.4</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>).<a href="#section-5.1-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-5.1-3">Each check produces one of the following outcomes:<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.1-4">
+          <dt id="section-5.1-4.1">
+<code>compatible</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-4.2">
+            <p id="section-5.1-4.2.1">The reporter performed the check and found no problem.<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.1-4.3">
+<code>incompatible</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-4.4">
+            <p id="section-5.1-4.4.1">The reporter performed the check, and the document or the retrieval
+failed it.<a href="#section-5.1-4.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.1-4.5">
+<code>indeterminate</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-4.6">
+            <p id="section-5.1-4.6.1">The reporter did not complete the check; the reason code states why
+(<a href="#reasons" class="auto internal xref">Section 5.2</a>).<a href="#section-5.1-4.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-5.1-5">Whether the reporter accepts an active document is determined by its
+processing under <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>, not by the outcomes. A reporter can accept a
+document for which some results are <code>incompatible</code>; the optional
+<code>accepted</code> member of an active document report (<a href="#format" class="auto internal xref">Section 6.1</a>) can state
+whether it did.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="reasons">
+<section id="section-5.2">
+        <h3 id="name-reason-codes">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-reason-codes" class="section-name selfRef">Reason Codes</a>
+        </h3>
+<p id="section-5.2-1">An <code>incompatible</code> or <code>indeterminate</code> result carries one of the
+following reason codes, or one registered as described in
+<a href="#iana-reasons" class="auto internal xref">Section 11.5</a>. The check with which each is used is given in
+parentheses.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.2-2">
+          <dt id="section-5.2-2.1">
+<code>unreachable</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.2">
+            <p id="section-5.2-2.2.1">(<code>retrieval</code>) DNS resolution or the connection failed, the request
+timed out, or the reporter declined to connect
+(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>).<a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.3">
+<code>tls_error</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.4">
+            <p id="section-5.2-2.4.1">(<code>retrieval</code>) The TLS handshake or server certificate validation
+failed.<a href="#section-5.2-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.5">
+<code>redirect</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.6">
+            <p id="section-5.2-2.6.1">(<code>retrieval</code>) The response had a 3xx status code and did not validate
+a cached copy. Redirects are not followed.<a href="#section-5.2-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.7">
+<code>http_error</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.8">
+            <p id="section-5.2-2.8.1">(<code>retrieval</code>) The response had a status code that is neither 200 nor
+3xx.<a href="#section-5.2-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.9">
+<code>too_large</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.10">
+            <p id="section-5.2-2.10.1">(<code>retrieval</code>) The response exceeded the reporter's size limit.<a href="#section-5.2-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.11">
+<code>invalid_json</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.12">
+            <p id="section-5.2-2.12.1">(<code>document_structure</code>) The document is not a JSON object.<a href="#section-5.2-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.13">
+<code>client_id_mismatch</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.14">
+            <p id="section-5.2-2.14.1">(<code>document_structure</code>) The <code>client_id</code> member is absent or is not
+identical to the Client Identifier URL.<a href="#section-5.2-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.15">
+<code>invalid_value</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.16">
+            <p id="section-5.2-2.16.1">(<code>document_structure</code>) A member value is malformed or prohibited, for
+example by <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.1" class="relref">Section 4.1</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-5.2-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.17">
+<code>unsupported_value</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.18">
+            <p id="section-5.2-2.18.1">(<code>supported_values</code>) The reporter does not support the member's value
+or, for an array-valued member, one or more of its values.<a href="#section-5.2-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.19">
+<code>policy_violation</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.20">
+            <p id="section-5.2-2.20.1">(<code>metadata_policy</code>) The reporter's policy does not permit the member's
+value or, if no member is named, the metadata.<a href="#section-5.2-2.20.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.21">
+<code>runtime_evidence_required</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.22">
+            <p id="section-5.2-2.22.1">(any check, with <code>indeterminate</code>) The check requires evidence that is
+available only while processing an OAuth request.<a href="#section-5.2-2.22.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.2-2.23">
+<code>not_evaluated</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-2.24">
+            <p id="section-5.2-2.24.1">(any check, with <code>indeterminate</code>) The reporter did not perform the
+check, by local policy or because an earlier check failed.<a href="#section-5.2-2.24.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="active">
+<section id="section-5.3">
+        <h3 id="name-active-document-evaluation">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-active-document-evaluation" class="section-name selfRef">Active Document Evaluation</a>
+        </h3>
+<p id="section-5.3-1">A reporter evaluates the active document as part of its processing
+under <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. This specification adds no retrieval and no processing
+step; the reporter records the results of its existing processing as
+outcomes of the checks in <a href="#checks" class="auto internal xref">Section 5.1</a>. Retrievals of resources that the
+active document references, such as the JWK Set at <code>jwks_uri</code>, are part
+of that processing whenever they occur. The reporter records their
+failures as <code>retrieval</code> results that name the referencing member, in
+the report for the digest of the document that references them.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="candidate">
+<section id="section-5.4">
+        <h3 id="name-candidate-document-evaluati">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-candidate-document-evaluati" class="section-name selfRef">Candidate Document Evaluation</a>
+        </h3>
+<p id="section-5.4-1">A reporter <span class="bcp14">MAY</span> evaluate the candidate document named by its reporting
+configuration, for example after it establishes reporting configuration
+that includes a candidate URL, or when the candidate URL changes.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<p id="section-5.4-2">The reporter retrieves the candidate document as it retrieves a Client
+ID Metadata Document (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>), including the prohibition
+on following redirects, and applies the same size limit
+(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.11" class="relref">Section 10.11</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>) and request forgery protections
+(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>). The reporter <span class="bcp14">MAY</span> use HTTP caching
+<span>[<a href="#RFC9111" class="cite xref">RFC9111</a>]</span>, including conditional requests, to avoid retrieving an
+unchanged candidate document. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.5" class="relref">Section 4.5</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> applies to a
+candidate document as it applies to a Client ID Metadata Document.<a href="#section-5.4-2" class="pilcrow">¶</a></p>
+<p id="section-5.4-3">A candidate document describes the client identified by the Client
+Identifier URL, not a separate client identified by the candidate URL.
+Its <code>client_id</code> member <span class="bcp14">MUST</span> be identical, under simple string
+comparison (<span><a href="https://rfc-editor.org/rfc/rfc3986#section-6.2.1" class="relref">Section 6.2.1</a> of [<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>), to the Client Identifier
+URL. For candidate documents, this requirement replaces the requirement
+in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4" class="relref">Section 4</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> that the <code>client_id</code> value match the URL used
+to retrieve the document. A reporter reports a mismatch as the outcome
+<code>incompatible</code> for the <code>document_structure</code> check, with the reason
+<code>client_id_mismatch</code>.<a href="#section-5.4-3" class="pilcrow">¶</a></p>
+<p id="section-5.4-4">A reporter evaluating a candidate document:<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.4-5">
+<li id="section-5.4-5.1">
+            <p id="section-5.4-5.1.1"><span class="bcp14">MUST NOT</span> use the candidate document's metadata to process any OAuth
+request, replace or modify the active document's metadata, admit a
+client, issue credentials or tokens, or change an existing grant or
+consent, and <span class="bcp14">MUST NOT</span> store the candidate document where request
+processing reads client metadata.<a href="#section-5.4-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.4-5.2">
+            <p id="section-5.4-5.2.1"><span class="bcp14">MUST NOT</span> retrieve, or deliver reports to, the URLs in the candidate
+document's <code>client_metadata_report_uri</code> or
+<code>client_metadata_candidate_uri</code> members. The reporter <span class="bcp14">MAY</span> check
+those values as it checks any other member.<a href="#section-5.4-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.4-5.3">
+            <p id="section-5.4-5.3.1"><span class="bcp14">MUST NOT</span> perform an authorization flow, token request, or client
+authentication on behalf of the candidate, and <span class="bcp14">MUST NOT</span> replay any
+credential presented by a client instance.<a href="#section-5.4-5.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.4-5.4">
+            <p id="section-5.4-5.4.1"><span class="bcp14">MUST NOT</span> use the result of a candidate evaluation when processing an
+active document, including an active document whose octets are
+identical to an evaluated candidate document.<a href="#section-5.4-5.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.4-6">Other than the URLs excluded by item 2, a reporter <span class="bcp14">MAY</span> retrieve URLs in
+the candidate document that it would retrieve when processing OAuth
+requests with the candidate as the client's metadata, such as
+<code>jwks_uri</code>, subject to <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.7" class="relref">Section 10.7</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>.<a href="#section-5.4-6" class="pilcrow">¶</a></p>
+<p id="section-5.4-7">A check whose result depends on evidence available only while
+processing an OAuth request produces the outcome <code>indeterminate</code> with
+the reason <code>runtime_evidence_required</code>. For example, a reporter can
+determine that it supports <code>private_key_jwt</code> as a
+<code>token_endpoint_auth_method</code> value, but not that deployed client
+instances hold a private key corresponding to a public key the
+candidate document publishes.<a href="#section-5.4-7" class="pilcrow">¶</a></p>
+<p id="section-5.4-8">The following is an example of a candidate document that would replace
+the active document in <a href="#fig-active" class="auto internal xref">Figure 2</a>. It adds a redirect URI on
+another origin, adds the device authorization grant type, and changes
+the client authentication method:<a href="#section-5.4-8" class="pilcrow">¶</a></p>
+<span id="name-example-candidate-document"></span><div id="fig-candidate">
+<figure id="figure-3">
+          <div class="lang-json sourcecode" id="section-5.4-9.1">
+<pre>
+{
+  "client_id": "https://client.example/oauth/client.json",
+  "client_name": "Example Client",
+  "redirect_uris": [
+    "https://client.example/callback",
+    "https://app.example.net/callback"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token",
+    "urn:ietf:params:oauth:grant-type:device_code"
+  ],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks_uri": "https://client.example/oauth/jwks.json",
+  "client_metadata_report_uri":
+    "https://client.example/oauth/reports"
+}
+</pre>
+</div>
+<figcaption><a href="#figure-3" class="selfRef">Figure 3</a>:
+<a href="#name-example-candidate-document" class="selfRef">Example Candidate Document</a>
+          </figcaption></figure>
+</div>
+</section>
+</div>
+<div id="digest">
+<section id="section-5.5">
+        <h3 id="name-document-digest">
+<a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-document-digest" class="section-name selfRef">Document Digest</a>
+        </h3>
+<p id="section-5.5-1">A reporter obtains a document when it receives the complete content of a
+200 response or, for a candidate document, when a 304 (Not Modified)
+response (<span><a href="https://rfc-editor.org/rfc/rfc9110#section-15.4.5" class="relref">Section 15.4.5</a> of [<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>) to a conditional request
+validates a copy that it has cached. For an active document, whether a
+304 response validates a cached copy is determined by the reporter's
+processing under <span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. A retrieval of a document that does not
+obtain it is a failed retrieval; a failure to retrieve a resource that
+the document references is not.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
+<p id="section-5.5-2">A report identifies the document it describes by a digest of the
+document's octets, which are the content of the HTTP response after any
+content coding (<span><a href="https://rfc-editor.org/rfc/rfc9110#section-8.4.1" class="relref">Section 8.4.1</a> of [<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>) has been removed. The
+digest is a JSON object with the following members:<a href="#section-5.5-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.5-3">
+          <dt id="section-5.5-3.1">
+<code>algorithm</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.5-3.2">
+            <p id="section-5.5-3.2.1"><span class="bcp14">REQUIRED</span>. JSON string containing a hash algorithm key from the "Hash
+Algorithms for HTTP Digest Fields" registry established by
+<span>[<a href="#RFC9530" class="cite xref">RFC9530</a>]</span>. In this version of the report format, the value <span class="bcp14">MUST</span> be
+<code>"sha-256"</code>.<a href="#section-5.5-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-5.5-3.3">
+<code>value</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.5-3.4">
+            <p id="section-5.5-3.4.1"><span class="bcp14">REQUIRED</span>. JSON string containing the base64url encoding
+(<span><a href="https://rfc-editor.org/rfc/rfc7515#section-2" class="relref">Section 2</a> of [<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>) of the hash of the document's octets.<a href="#section-5.5-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-5.5-4">A publisher determines which version of its document a report
+describes by computing the digest of each version it has served
+(<a href="#version-confusion" class="auto internal xref">Section 9.6</a>).<a href="#section-5.5-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="reports">
+<section id="section-6">
+      <h2 id="name-reports">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-reports" class="section-name selfRef">Reports</a>
+      </h2>
+<div id="format">
+<section id="section-6.1">
+        <h3 id="name-report-format">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-report-format" class="section-name selfRef">Report Format</a>
+        </h3>
+<p id="section-6.1-1">A report is a JSON object <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span> with the following members:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6.1-2">
+          <dt id="section-6.1-2.1">
+<code>version</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.2">
+            <p id="section-6.1-2.2.1"><span class="bcp14">REQUIRED</span>. JSON number containing the version of the report format,
+which is <code>1</code> for this specification.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.3">
+<code>report_id</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.4">
+            <p id="section-6.1-2.4.1"><span class="bcp14">REQUIRED</span>. JSON string that identifies the report. The value <span class="bcp14">MUST</span> be
+unique across all reporters with high probability; a version 4 or
+version 7 UUID <span>[<a href="#RFC9562" class="cite xref">RFC9562</a>]</span> meets this requirement. A reporter uses the
+same value when it retries delivery of a report and a different value
+for every other report.<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.5">
+<code>client_id</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.6">
+            <p id="section-6.1-2.6.1"><span class="bcp14">REQUIRED</span>. JSON string containing the Client Identifier URL.<a href="#section-6.1-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.7">
+<code>document_type</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.8">
+            <p id="section-6.1-2.8.1"><span class="bcp14">REQUIRED</span>. JSON string: <code>"active"</code> for a report about the active
+document, or <code>"candidate"</code> for a report about a candidate document.<a href="#section-6.1-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.9">
+<code>candidate_uri</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.10">
+            <p id="section-6.1-2.10.1"><span class="bcp14">REQUIRED</span> if <code>document_type</code> is <code>"candidate"</code>; otherwise, it <span class="bcp14">MUST NOT</span>
+be present. JSON string containing the candidate URL from which the
+reporter retrieved, or attempted to retrieve, the candidate document.<a href="#section-6.1-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.11">
+<code>document_digest</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.12">
+            <p id="section-6.1-2.12.1"><span class="bcp14">REQUIRED</span> if the reporter obtained the document (<a href="#digest" class="auto internal xref">Section 5.5</a>);
+otherwise, it <span class="bcp14">MUST NOT</span> be present. JSON object containing the digest
+of the document.<a href="#section-6.1-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.13">
+<code>accepted</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.14">
+            <p id="section-6.1-2.14.1"><span class="bcp14">OPTIONAL</span> if <code>document_type</code> is <code>"active"</code> and <code>document_digest</code> is
+present; otherwise, it <span class="bcp14">MUST NOT</span> be present. JSON boolean: <code>true</code> if
+the reporter accepted the document at its most recent evaluation in
+the reporting period, and <code>false</code> otherwise.<a href="#section-6.1-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.15">
+<code>period_start</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.16">
+            <p id="section-6.1-2.16.1"><span class="bcp14">REQUIRED</span>. JSON string containing the start of the reporting period as
+a <code>date-time</code> value (<span><a href="https://rfc-editor.org/rfc/rfc3339#section-5.6" class="relref">Section 5.6</a> of [<a href="#RFC3339" class="cite xref">RFC3339</a>]</span>) in UTC.<a href="#section-6.1-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.17">
+<code>period_end</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.18">
+            <p id="section-6.1-2.18.1"><span class="bcp14">REQUIRED</span>. JSON string containing the end of the reporting period, in
+the same format.<a href="#section-6.1-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.19">
+<code>issuer</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.20">
+            <p id="section-6.1-2.20.1"><span class="bcp14">OPTIONAL</span>. JSON string containing the reporter's issuer identifier
+(<span><a href="https://rfc-editor.org/rfc/rfc8414#section-2" class="relref">Section 2</a> of [<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>). Collectors cannot verify it (<a href="#forged" class="auto internal xref">Section 9.4</a>).<a href="#section-6.1-2.20.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-2.21">
+<code>results</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-2.22">
+            <p id="section-6.1-2.22.1"><span class="bcp14">REQUIRED</span>. JSON array of one or more result objects.<a href="#section-6.1-2.22.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-6.1-3">A result object has the following members:<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6.1-4">
+          <dt id="section-6.1-4.1">
+<code>check</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.2">
+            <p id="section-6.1-4.2.1"><span class="bcp14">REQUIRED</span>. JSON string naming the check (<a href="#checks" class="auto internal xref">Section 5.1</a>).<a href="#section-6.1-4.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-4.3">
+<code>outcome</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.4">
+            <p id="section-6.1-4.4.1"><span class="bcp14">REQUIRED</span>. JSON string: <code>"compatible"</code>, <code>"incompatible"</code>, or
+<code>"indeterminate"</code>.<a href="#section-6.1-4.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-4.5">
+<code>reason</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.6">
+            <p id="section-6.1-4.6.1"><span class="bcp14">REQUIRED</span> if <code>outcome</code> is <code>"incompatible"</code> or <code>"indeterminate"</code>;
+otherwise, it <span class="bcp14">MUST NOT</span> be present. JSON string containing a reason
+code (<a href="#reasons" class="auto internal xref">Section 5.2</a>).<a href="#section-6.1-4.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-4.7">
+<code>member</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.8">
+            <p id="section-6.1-4.8.1"><span class="bcp14">OPTIONAL</span>. JSON string containing the name of the top-level member of
+the document to which the result applies (<a href="#result-scope" class="auto internal xref">Section 6.2</a>).<a href="#section-6.1-4.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-4.9">
+<code>values</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.10">
+            <p id="section-6.1-4.10.1"><span class="bcp14">OPTIONAL</span> if <code>member</code> is present; otherwise, it <span class="bcp14">MUST NOT</span> be present.
+JSON array of the values of the named member to which the result
+applies, for example the values of an array-valued member that the
+reporter does not support.<a href="#section-6.1-4.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-4.11">
+<code>http_status</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.12">
+            <p id="section-6.1-4.12.1"><span class="bcp14">OPTIONAL</span> if <code>reason</code> is <code>"http_error"</code>; otherwise, it <span class="bcp14">MUST NOT</span> be
+present. JSON number containing the HTTP status code received.<a href="#section-6.1-4.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-6.1-4.13">
+<code>count</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-6.1-4.14">
+            <p id="section-6.1-4.14.1"><span class="bcp14">OPTIONAL</span>. JSON number containing the number of times the reporter
+observed the result during the reporting period. If present, it <span class="bcp14">MUST</span>
+be a positive integer.<a href="#section-6.1-4.14.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-6.1-5">A collector <span class="bcp14">MUST</span> ignore a report whose <code>version</code> it does not support,
+and <span class="bcp14">MUST</span> ignore members it does not understand. A <code>check</code> or <code>reason</code>
+value that a collector does not recognize does not make the report
+invalid.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="result-scope">
+<section id="section-6.2">
+        <h3 id="name-result-scope">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-result-scope" class="section-name selfRef">Result Scope</a>
+        </h3>
+<p id="section-6.2-1">A result that names a member applies only to that member or, for the
+<code>retrieval</code> check, to the resource that member identifies. A result that
+names no member applies to the document as a whole. For the <code>retrieval</code>
+check, it describes retrieval of the document itself. For other checks,
+an <code>incompatible</code> or <code>indeterminate</code> result that names no member
+describes a problem without identifying a member, and a <code>compatible</code>
+result that names no member states that the check found no problem other
+than those reported in results that name members.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="active-reports">
+<section id="section-6.3">
+        <h3 id="name-active-document-reports">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-active-document-reports" class="section-name selfRef">Active Document Reports</a>
+        </h3>
+<p id="section-6.3-1">An active document report aggregates the results that a reporter
+observed during a reporting period. It contains results for one Client
+Identifier URL, collector URL (<a href="#establishing" class="auto internal xref">Section 4.1</a>), reporting period, and
+document digest. A reporter <span class="bcp14">MUST</span> report results for different document
+digests in separate reports, and <span class="bcp14">MUST</span> report results for failed
+retrievals (<a href="#digest" class="auto internal xref">Section 5.5</a>) in reports that have no digest.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">Each distinct combination of check, member, values, outcome, reason,
+and HTTP status code appears as one result. Counts of different results
+are not additive, because one evaluation produces a result for each
+check it performs.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-3">A reporter <span class="bcp14">MAY</span> omit results with the outcome <code>compatible</code>, and delivers
+no report if no results remain. A check that does not appear in an
+active document report conveys no information about whether the
+reporter performed it.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="candidate-reports">
+<section id="section-6.4">
+        <h3 id="name-candidate-reports">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-candidate-reports" class="section-name selfRef">Candidate Reports</a>
+        </h3>
+<p id="section-6.4-1">A candidate report describes one evaluation of a candidate document. It
+contains at least one result for each check defined in this
+specification, including results with the outcome <code>compatible</code>. A
+reporter that does not perform one of those checks, by local policy or
+because an earlier check failed, reports it with the outcome
+<code>indeterminate</code> and the reason <code>not_evaluated</code>. For example, after a
+failed retrieval, the <code>document_structure</code>, <code>supported_values</code>, and
+<code>metadata_policy</code> checks are reported as <code>not_evaluated</code>. A reporter <span class="bcp14">MAY</span>
+also report results for checks defined elsewhere.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="content">
+<section id="section-6.5">
+        <h3 id="name-report-content-restrictions">
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-report-content-restrictions" class="section-name selfRef">Report Content Restrictions</a>
+        </h3>
+<p id="section-6.5-1">Reports <span class="bcp14">MUST NOT</span> include access tokens, refresh tokens, authorization
+codes, client assertions or other credentials, private keys, the
+content of OAuth requests or responses, or identifiers of end users or
+client instances. Reporters <span class="bcp14">SHOULD</span> convey diagnostic information
+through registered check and reason values rather than free-form text.<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="examples">
+<section id="section-6.6">
+        <h3 id="name-examples">
+<a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-examples" class="section-name selfRef">Examples</a>
+        </h3>
+<p id="section-6.6-1">The following example shows a report of an evaluation of the candidate
+document in <a href="#fig-candidate" class="auto internal xref">Figure 3</a>. The reporter does not support the device
+authorization grant, and its policy restricts redirect URIs to the
+origin of the Client Identifier URL. The <code>compatible</code> results that name
+no member state that those checks found no other problem. The digest is
+computed over the octets of the document exactly as shown in
+<a href="#fig-candidate" class="auto internal xref">Figure 3</a>, with LF line endings and no trailing line break.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6.6-2">
+<pre>
+{
+  "version": 1,
+  "report_id": "4c4175e6-2070-40c1-9015-184a1523bcba",
+  "client_id": "https://client.example/oauth/client.json",
+  "document_type": "candidate",
+  "candidate_uri": "https://client.example/oauth/client-next.json",
+  "document_digest": {
+    "algorithm": "sha-256",
+    "value": "_HhRKZxuBzacmpnLQL2CHaJsd8mWZd0wN3kNGZhc7-w"
+  },
+  "period_start": "2026-11-09T12:04:10Z",
+  "period_end": "2026-11-09T12:04:11Z",
+  "issuer": "https://as.example",
+  "results": [
+    {"check": "retrieval", "outcome": "compatible"},
+    {"check": "document_structure", "outcome": "compatible"},
+    {
+      "check": "supported_values",
+      "member": "grant_types",
+      "values": ["urn:ietf:params:oauth:grant-type:device_code"],
+      "outcome": "incompatible",
+      "reason": "unsupported_value"
+    },
+    {"check": "supported_values", "outcome": "compatible"},
+    {
+      "check": "metadata_policy",
+      "member": "redirect_uris",
+      "values": ["https://app.example.net/callback"],
+      "outcome": "incompatible",
+      "reason": "policy_violation"
+    },
+    {"check": "metadata_policy", "outcome": "compatible"}
+  ]
+}
+</pre><a href="#section-6.6-2" class="pilcrow">¶</a>
+</div>
+<p id="section-6.6-3">The following example shows an active document report covering one
+hour in which every retrieval of the Client Identifier URL received a
+403 response. No document was obtained, so the report has no digest.
+The reporter omits its issuer identifier.<a href="#section-6.6-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6.6-4">
+<pre>
+{
+  "version": 1,
+  "report_id": "0f9a3c1e-5b7d-4e21-9a4c-7d2b8e6f1a30",
+  "client_id": "https://client.example/oauth/client.json",
+  "document_type": "active",
+  "period_start": "2026-11-09T12:00:00Z",
+  "period_end": "2026-11-09T13:00:00Z",
+  "results": [
+    {
+      "check": "retrieval",
+      "outcome": "incompatible",
+      "reason": "http_error",
+      "http_status": 403,
+      "count": 12
+    }
+  ]
+}
+</pre><a href="#section-6.6-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="delivery">
+<section id="section-7">
+      <h2 id="name-report-delivery">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-report-delivery" class="section-name selfRef">Report Delivery</a>
+      </h2>
+<div id="request">
+<section id="section-7.1">
+        <h3 id="name-delivery-request">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-delivery-request" class="section-name selfRef">Delivery Request</a>
+        </h3>
+<p id="section-7.1-1">A reporter delivers a report by sending an HTTP POST request to the
+collector URL associated with the report's results (<a href="#establishing" class="auto internal xref">Section 4.1</a>),
+with the report as the request content and a <code>Content-Type</code> header
+field of <code>application/oauth-client-metadata-report+json</code>. Each request
+carries one report. The reporter delivers a report to that collector
+URL even if the reporting configuration has since been replaced or
+discarded.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-2">The reporter <span class="bcp14">MUST NOT</span> include cookies, HTTP authentication
+credentials, or OAuth credentials in the request, and <span class="bcp14">MUST NOT</span> copy
+header fields or content from any OAuth request into it.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
+<p id="section-7.1-3">The following is an example of a delivery request; the content is a
+report such as those in <a href="#examples" class="auto internal xref">Section 6.6</a>:<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<div class="lang-http-message sourcecode" id="section-7.1-4">
+<pre>
+POST /oauth/reports HTTP/1.1
+Host: client.example
+Content-Type: application/oauth-client-metadata-report+json
+
+{"version":1,"report_id":"4c4175e6-2070-40c1-9015-184a1523bcba",...}
+</pre><a href="#section-7.1-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="response">
+<section id="section-7.2">
+        <h3 id="name-response-handling">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-response-handling" class="section-name selfRef">Response Handling</a>
+        </h3>
+<p id="section-7.2-1">A 2xx status code indicates that the collector received the report. A
+collector <span class="bcp14">SHOULD</span> respond with a 2xx status code to a repeated delivery
+of a report it has already received, which it detects by <code>report_id</code>,
+and <span class="bcp14">SHOULD</span> respond with a 4xx status code to a report it rejects. A
+collector can discard reports whose <code>client_id</code> identifies a client for
+which it does not collect reports.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-2">The reporter <span class="bcp14">MUST NOT</span> follow redirects; a 3xx status code is a delivery
+failure that the reporter does not retry. After a connection failure, a
+timeout, a 429 (Too Many Requests) status code
+(<span><a href="https://rfc-editor.org/rfc/rfc6585#section-4" class="relref">Section 4</a> of [<a href="#RFC6585" class="cite xref">RFC6585</a>]</span>), or a 5xx status code, the reporter <span class="bcp14">MAY</span> retry
+delivery within the time limit in <a href="#bounds" class="auto internal xref">Section 7.3</a>. A reporter that retries
+<span class="bcp14">SHOULD</span> increase the interval between attempts and <span class="bcp14">SHOULD</span> honor the
+<code>Retry-After</code> header field (<span><a href="https://rfc-editor.org/rfc/rfc9110#section-10.2.3" class="relref">Section 10.2.3</a> of [<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>). The reporter
+<span class="bcp14">SHOULD NOT</span> retry after any other 4xx status code.<a href="#section-7.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="bounds">
+<section id="section-7.3">
+        <h3 id="name-limits">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-limits" class="section-name selfRef">Limits</a>
+        </h3>
+<p id="section-7.3-1">A report <span class="bcp14">MUST NOT</span> exceed 16384 octets. A reporter whose active document
+results do not fit in one report <span class="bcp14">MAY</span> divide them among several active
+document reports that have the same <code>document_digest</code> and reporting
+period. Collectors <span class="bcp14">SHOULD</span> support reports up to that size.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">A reporter <span class="bcp14">MUST NOT</span> attempt delivery of a report more than 24 hours
+after its <code>period_end</code>.<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">A reporter <span class="bcp14">SHOULD</span> use reporting periods of at least one hour for active
+document reports. A reporter <span class="bcp14">SHOULD NOT</span> report on the same candidate
+document digest, or on failed retrievals of the same candidate URL,
+more than once in any 24-hour period unless the results change, for
+example because the reporter's supported values or policy changed.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-4">For each origin, a reporter <span class="bcp14">SHOULD</span> limit the rate of delivery requests,
+the rate of candidate retrievals, and the number of Client Identifier
+URLs for which it maintains reporting configuration. A reporter can
+apportion a per-origin delivery limit among the collector URLs on that
+origin (<a href="#shared-origins" class="auto internal xref">Section 9.3</a>). A reporter <span class="bcp14">MAY</span> sample, aggregate, delay,
+or discard reports, and <span class="bcp14">MAY</span> discard evaluations or reporting
+configuration, under local policy, for example when it reaches a
+resource limit.<a href="#section-7.3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="interpreting">
+<section id="section-8">
+      <h2 id="name-interpreting-reports">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-interpreting-reports" class="section-name selfRef">Interpreting Reports</a>
+      </h2>
+<p id="section-8-1">A report describes the named checks, applied by one reporter to the
+identified octets, during the reporting period. It describes no other
+reporter, document, or time.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">The absence of reports can result from the absence of problems, from
+authorization servers that do not implement this specification or do
+not report for the client, from sampling or suppression, from delivery
+failure, or from reporting configuration never having been established.
+The absence of reports is not approval.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">No outcome, and no combination of outcomes, states that a document is
+safe to deploy. In particular, a candidate report whose results are all
+<code>compatible</code> does not establish:<a href="#section-8-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8-4.1">
+          <p id="section-8-4.1.1">that client instances are ready for the change, for example that
+they hold keys in a new JWK Set or handle a new redirect URI;<a href="#section-8-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-4.2">
+          <p id="section-8-4.2.1">that authorization servers other than the reporter would accept the
+document once it is served at the Client Identifier URL;<a href="#section-8-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-4.3">
+          <p id="section-8-4.3.1">that the reporter would reach the same results after its supported
+values or policy change; or<a href="#section-8-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-8-4.4">
+          <p id="section-8-4.4.1">that serving the document will not cause the reporter to invalidate
+grants or require new consent, which <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.5" class="relref">Section 10.5</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> permits
+when metadata changes.<a href="#section-8-4.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-8-5">The document digest identifies the document, not every input to its
+evaluation. Results that depend on referenced resources, such as the
+JWK Set at <code>jwks_uri</code>, can differ between evaluations of documents with
+the same digest, and a candidate report does not establish that those
+resources will remain available or unchanged.<a href="#section-8-5" class="pilcrow">¶</a></p>
+<p id="section-8-6">An <code>accepted</code> value of <code>true</code> in an active document report describes
+the reporter's past processing; it does not establish that the reporter
+will continue to accept the document.<a href="#section-8-6" class="pilcrow">¶</a></p>
+<p id="section-8-7">Reporting does not synchronize caches. A reporter can continue to use
+cached client metadata after the publisher serves a new document
+(<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6.2" class="relref">Section 6.2</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>), so active document reports for a previous
+digest can arrive after a change.<a href="#section-8-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security">
+<section id="section-9">
+      <h2 id="name-security-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-9-1">The security considerations in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10" class="relref">Section 10</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> apply to this
+specification.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<div id="sec-independence">
+<section id="section-9.1">
+        <h3 id="name-reporting-and-authorization">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-reporting-and-authorization" class="section-name selfRef">Reporting and Authorization Decisions</a>
+        </h3>
+<p id="section-9.1-1">Because a reporter decides OAuth requests independently of reporting
+(<a href="#independence" class="auto internal xref">Section 3.1</a>), an attacker that blocks the collector, serves a
+hostile candidate document, or delivers forged reports to a collector
+does not affect authorization outcomes.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="amplification">
+<section id="section-9.2">
+        <h3 id="name-request-amplification">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-request-amplification" class="section-name selfRef">Request Amplification</a>
+        </h3>
+<p id="section-9.2-1">Any party can cause an authorization server to retrieve a Client
+Identifier URL by sending an OAuth request that names it. Because both
+members defined in <a href="#metadata" class="auto internal xref">Section 4</a> are restricted to the origin of the
+Client Identifier URL, candidate retrieval and report delivery are
+directed only at the origin that the authorization server already
+contacts for that client. The only other requests that reporting can
+cause are retrievals of resources a candidate document references, such
+as a JWK Set, which an active document could equally reference.
+Because reporters do not follow redirects, a collector cannot direct
+reports to another origin.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-2">Aggregation by document digest and reporting period bounds the number
+of reports independently of the number of OAuth requests. An attacker
+can create any number of Client Identifier URLs on an origin it
+controls; the per-origin limits in <a href="#bounds" class="auto internal xref">Section 7.3</a> bound the reporting
+configurations, candidate retrievals, and delivery requests that those
+URLs can cause. The size limit of <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.11" class="relref">Section 10.11</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> and
+asynchronous processing limit the cost of each candidate evaluation.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="shared-origins">
+<section id="section-9.3">
+        <h3 id="name-shared-origins">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-shared-origins" class="section-name selfRef">Shared Origins</a>
+        </h3>
+<p id="section-9.3-1">An origin can host documents for several publishers, for example on a
+hosting platform or a CIMD Service (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-10.13" class="relref">Section 10.13</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>). On such
+an origin, the same origin does not imply the same publisher: one
+publisher can name a URL controlled by another publisher as its
+collector, and reporters will deliver reports that the recipient did
+not request to that URL. Such reports concern only the naming
+publisher's client. Per-origin limits (<a href="#bounds" class="auto internal xref">Section 7.3</a>) bound this traffic
+across collector URLs that differ only in path, but they also let one
+publisher consume the delivery budget of others on the same origin,
+which reporters can mitigate by apportioning the limit among collector
+URLs. A publisher that names another publisher's document as its
+candidate receives a <code>client_id_mismatch</code> result, and candidate
+evaluation affects no client (<a href="#candidate" class="auto internal xref">Section 5.4</a>). Operators of shared
+origins can restrict the values that publishers use for these members,
+for example to URLs under the path of the publisher's own document. A
+mechanism by which collectors authorize reports, such as the external
+destination verification of DMARC (<span><a href="https://rfc-editor.org/rfc/rfc9990#section-4" class="relref">Section 4</a> of [<a href="#RFC9990" class="cite xref">RFC9990</a>]</span>), would
+address this as well.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="forged">
+<section id="section-9.4">
+        <h3 id="name-forged-reports">
+<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-forged-reports" class="section-name selfRef">Forged Reports</a>
+        </h3>
+<p id="section-9.4-1">HTTPS authenticates the collector to the reporter, but not the reporter
+to the collector. Any party can deliver a report to a collector, with
+any <code>issuer</code> value. Unless reporters are authenticated by other means,
+for example with HTTP Message Signatures <span>[<a href="#RFC9421" class="cite xref">RFC9421</a>]</span> and keys that the
+publisher trusts, publishers should treat reports as unverified
+diagnostic input and should not make security-relevant changes, such as
+changes to keys, redirect URIs, or client authentication methods,
+automatically in response to a report. An attacker could otherwise
+forge reports to induce a publisher to revert a change or to adopt a
+weaker configuration. Collectors can apply size and rate limits to
+delivery requests.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="oracle">
+<section id="section-9.5">
+        <h3 id="name-candidate-evaluation-as-a-p">
+<a href="#section-9.5" class="section-number selfRef">9.5. </a><a href="#name-candidate-evaluation-as-a-p" class="section-name selfRef">Candidate Evaluation as a Policy Oracle</a>
+        </h3>
+<p id="section-9.5-1">Any party that controls a Client Identifier URL can publish candidate
+documents and learn from the resulting reports which values and
+policies a reporter permits, without involving an end user. Much of
+this information is also available from authorization server metadata
+<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> or by sending OAuth requests. A reporter controls what it
+discloses through the granularity of its results, for example by
+reporting <code>policy_violation</code> without naming a member or listing
+values, and <span class="bcp14">MAY</span> limit
+candidate evaluation to clients that meet local policy, such as clients
+for which it has already processed OAuth requests.<a href="#section-9.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="version-confusion">
+<section id="section-9.6">
+        <h3 id="name-document-version-confusion">
+<a href="#section-9.6" class="section-number selfRef">9.6. </a><a href="#name-document-version-confusion" class="section-name selfRef">Document Version Confusion</a>
+        </h3>
+<p id="section-9.6-1">A publisher can attribute a report to the wrong version of its
+document, particularly while reporters hold an earlier version in
+cache. The document digest binds each result to the exact octets of the
+document, though not to the resources the document references
+(<a href="#interpreting" class="auto internal xref">Section 8</a>), and publishers should match reports to versions by
+digest rather than by time of arrival. A digest that matches no version
+the publisher served can indicate that an intermediary modified the
+document or that different reporters receive different content. A
+<code>compatible</code> result for a candidate document applies only to the
+evaluated octets; any change, including a change to whitespace,
+produces a different digest and therefore a different document.<a href="#section-9.6-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="privacy">
+<section id="section-10">
+      <h2 id="name-privacy-considerations">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
+      </h2>
+<p id="section-10-1">The privacy considerations in <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-11" class="relref">Section 11</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> apply to this
+specification.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<div id="relationships">
+<section id="section-10.1">
+        <h3 id="name-disclosure-of-deployment-re">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-disclosure-of-deployment-re" class="section-name selfRef">Disclosure of Deployment Relationships</a>
+        </h3>
+<p id="section-10.1-1">A report informs the publisher that the reporter has encountered the
+client. The <code>issuer</code> member makes the reporter's identity explicit, and
+a reporter that does not want to disclose its identity omits it. On a
+platform that hosts authorization servers for several tenants, each
+tenant's authorization server is a separate reporter whose issuer
+identifier can identify the tenant, so including it discloses the
+tenant's relationship with the client. The network source of a delivery
+request remains visible to the collector and can identify the
+reporter's operator. A reporter that does not want to disclose a
+relationship with a client does not report for that client.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="activity">
+<section id="section-10.2">
+        <h3 id="name-end-user-activity">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-end-user-activity" class="section-name selfRef">End-User Activity</a>
+        </h3>
+<p id="section-10.2-1">Retrieval of a Client Identifier URL can reveal when users authorize a
+client (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-11.1" class="relref">Section 11.1</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span>). Active document reports aggregated
+over a reporting period add little to that information, although the
+<code>count</code> member reveals the number of retrievals in the period. At a
+reporter with few users, a report delivered immediately after a
+retrieval can reveal the timing of one user's activity; such reporters
+can use longer reporting periods or delay delivery.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<p id="section-10.2-2">Candidate reports carry the same risk in a different form: a candidate
+report describes one evaluation, so if a reporter evaluates a candidate
+document immediately after an OAuth request causes it to retrieve the
+active document, the report's reporting period reveals when that
+request occurred. Reporters can evaluate candidate documents on a
+schedule independent of OAuth requests, or delay candidate reports.
+Reports carry no end-user identifiers (<a href="#content" class="auto internal xref">Section 6.5</a>).<a href="#section-10.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-11">
+      <h2 id="name-iana-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<div id="iana-dcr">
+<section id="section-11.1">
+        <h3 id="name-oauth-dynamic-client-regist">
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-oauth-dynamic-client-regist" class="section-name selfRef">OAuth Dynamic Client Registration Metadata Registry</a>
+        </h3>
+<p id="section-11.1-1">This specification requests registration of the following client
+metadata in the "OAuth Dynamic Client Registration Metadata" registry
+<span>[<a href="#IANA.oauth-parameters" class="cite xref">IANA.oauth-parameters</a>]</span> established by <span>[<a href="#RFC7591" class="cite xref">RFC7591</a>]</span>:<a href="#section-11.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.1-2">
+          <dt id="section-11.1-2.1">Client Metadata Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.2">
+            <p id="section-11.1-2.2.1"><code>client_metadata_report_uri</code><a href="#section-11.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.3">Client Metadata Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.4">
+            <p id="section-11.1-2.4.1">URL of the collector that receives client metadata reports<a href="#section-11.1-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.5">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.6">
+            <p id="section-11.1-2.6.1">IETF<a href="#section-11.1-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.7">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.8">
+            <p id="section-11.1-2.8.1"><a href="#metadata" class="auto internal xref">Section 4</a> of this specification<a href="#section-11.1-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.9">Client Metadata Name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.10">
+            <p id="section-11.1-2.10.1"><code>client_metadata_candidate_uri</code><a href="#section-11.1-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.11">Client Metadata Description:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.12">
+            <p id="section-11.1-2.12.1">URL of a candidate client metadata document to be evaluated<a href="#section-11.1-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.13">Change Controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.14">
+            <p id="section-11.1-2.14.1">IETF<a href="#section-11.1-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.1-2.15">Specification Document(s):</dt>
+          <dd style="margin-left: 1.5em" id="section-11.1-2.16">
+            <p id="section-11.1-2.16.1"><a href="#metadata" class="auto internal xref">Section 4</a> of this specification<a href="#section-11.1-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-media-type">
+<section id="section-11.2">
+        <h3 id="name-media-type-registration">
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-media-type-registration" class="section-name selfRef">Media Type Registration</a>
+        </h3>
+<p id="section-11.2-1">This specification requests registration of the following media type
+in the "Media Types" registry <span>[<a href="#IANA.media-types" class="cite xref">IANA.media-types</a>]</span> in the manner
+described in <span>[<a href="#RFC6838" class="cite xref">RFC6838</a>]</span>:<a href="#section-11.2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-11.2-2">
+          <dt id="section-11.2-2.1">Type name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.2">
+            <p id="section-11.2-2.2.1">application<a href="#section-11.2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.3">Subtype name:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.4">
+            <p id="section-11.2-2.4.1">oauth-client-metadata-report+json<a href="#section-11.2-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.5">Required parameters:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.6">
+            <p id="section-11.2-2.6.1">N/A<a href="#section-11.2-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.7">Optional parameters:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.8">
+            <p id="section-11.2-2.8.1">N/A<a href="#section-11.2-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.9">Encoding considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.10">
+            <p id="section-11.2-2.10.1">binary; a report is a JSON object <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span>, which is encoded in
+UTF-8.<a href="#section-11.2-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.11">Security considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.12">
+            <p id="section-11.2-2.12.1">See <a href="#security" class="auto internal xref">Section 9</a> of this specification.<a href="#section-11.2-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.13">Interoperability considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.14">
+            <p id="section-11.2-2.14.1">N/A<a href="#section-11.2-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.15">Published specification:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.16">
+            <p id="section-11.2-2.16.1">This specification<a href="#section-11.2-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.17">Applications that use this media type:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.18">
+            <p id="section-11.2-2.18.1">OAuth authorization servers that deliver client metadata reports, and
+the collectors that receive them.<a href="#section-11.2-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.19">Fragment identifier considerations:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.20">
+            <p id="section-11.2-2.20.1">N/A<a href="#section-11.2-2.20.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.21">Additional information:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.22">
+            <p id="section-11.2-2.22.1">Deprecated alias names for this type: N/A<a href="#section-11.2-2.22.1" class="pilcrow">¶</a></p>
+<p id="section-11.2-2.22.2">Magic number(s): N/A<a href="#section-11.2-2.22.2" class="pilcrow">¶</a></p>
+<p id="section-11.2-2.22.3">File extension(s): N/A<a href="#section-11.2-2.22.3" class="pilcrow">¶</a></p>
+<p id="section-11.2-2.22.4">Macintosh file type code(s): N/A<a href="#section-11.2-2.22.4" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.23">Person &amp; email address to contact for further information:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.24">
+            <p id="section-11.2-2.24.1">Karl McGuinness, public@karlmcguinness.com<a href="#section-11.2-2.24.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.25">Intended usage:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.26">
+            <p id="section-11.2-2.26.1">COMMON<a href="#section-11.2-2.26.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.27">Restrictions on usage:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.28">
+            <p id="section-11.2-2.28.1">none<a href="#section-11.2-2.28.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.29">Author:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.30">
+            <p id="section-11.2-2.30.1">Karl McGuinness<a href="#section-11.2-2.30.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-11.2-2.31">Change controller:</dt>
+          <dd style="margin-left: 1.5em" id="section-11.2-2.32">
+            <p id="section-11.2-2.32.1">IETF<a href="#section-11.2-2.32.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-procedures">
+<section id="section-11.3">
+        <h3 id="name-registration-procedures">
+<a href="#section-11.3" class="section-number selfRef">11.3. </a><a href="#name-registration-procedures" class="section-name selfRef">Registration Procedures</a>
+        </h3>
+<p id="section-11.3-1">The registries established in <a href="#iana-checks" class="auto internal xref">Section 11.4</a> and <a href="#iana-reasons" class="auto internal xref">Section 11.5</a> are
+in the "OAuth Parameters" registry group <span>[<a href="#IANA.oauth-parameters" class="cite xref">IANA.oauth-parameters</a>]</span>.
+Values are registered via Specification Required (<span><a href="https://rfc-editor.org/rfc/rfc8126#section-4.6" class="relref">Section 4.6</a> of [<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>). Registration requests should be sent to
+<a href="mailto:oauth-ext-review@ietf.org">oauth-ext-review@ietf.org</a> to initiate a two-week review period.
+However, to allow for the allocation of values prior to publication of
+the final version of a specification, the designated experts may
+approve registration once they are satisfied that the specification
+will be completed and published.<a href="#section-11.3-1" class="pilcrow">¶</a></p>
+<p id="section-11.3-2">Designated experts (<span><a href="https://rfc-editor.org/rfc/rfc8126#section-5" class="relref">Section 5</a> of [<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>) should verify that a
+proposed value is unique, has a bounded meaning that fits the purpose
+of the registry, and does not carry free-form data or information that
+identifies end users or client instances.<a href="#section-11.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-checks">
+<section id="section-11.4">
+        <h3 id="name-oauth-client-metadata-repor">
+<a href="#section-11.4" class="section-number selfRef">11.4. </a><a href="#name-oauth-client-metadata-repor" class="section-name selfRef">OAuth Client Metadata Report Checks Registry</a>
+        </h3>
+<p id="section-11.4-1">This specification establishes the "OAuth Client Metadata Report
+Checks" registry.<a href="#section-11.4-1" class="pilcrow">¶</a></p>
+<div id="iana-checks-template">
+<section id="section-11.4.1">
+          <h4 id="name-registration-template">
+<a href="#section-11.4.1" class="section-number selfRef">11.4.1. </a><a href="#name-registration-template" class="section-name selfRef">Registration Template</a>
+          </h4>
+<span class="break"></span><dl class="dlParallel" id="section-11.4.1-1">
+            <dt id="section-11.4.1-1.1">Check Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.4.1-1.2">
+              <p id="section-11.4.1-1.2.1">The check identifier, as used in the <code>check</code> member of a result
+object.<a href="#section-11.4.1-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.4.1-1.3">Check Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.4.1-1.4">
+              <p id="section-11.4.1-1.4.1">A brief description of what the check evaluates.<a href="#section-11.4.1-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.4.1-1.5">Change Controller:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.4.1-1.6">
+              <p id="section-11.4.1-1.6.1">For IETF Stream RFCs, "IETF". Otherwise, the name of the responsible
+party.<a href="#section-11.4.1-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.4.1-1.7">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-11.4.1-1.8">
+              <p id="section-11.4.1-1.8.1">A reference to the document that defines the check.<a href="#section-11.4.1-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-checks-contents">
+<section id="section-11.4.2">
+          <h4 id="name-initial-registry-contents">
+<a href="#section-11.4.2" class="section-number selfRef">11.4.2. </a><a href="#name-initial-registry-contents" class="section-name selfRef">Initial Registry Contents</a>
+          </h4>
+<p id="section-11.4.2-1">For each of the following entries, the Change Controller is "IETF" and
+the Specification Document is <a href="#checks" class="auto internal xref">Section 5.1</a> of this specification.<a href="#section-11.4.2-1" class="pilcrow">¶</a></p>
+<span id="name-initial-checks"></span><div id="tab-checks">
+<table class="center" id="table-1">
+            <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-initial-checks" class="selfRef">Initial Checks</a>
+            </caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Check Name</th>
+                <th class="text-left" rowspan="1" colspan="1">Check Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>retrieval</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Whether the document, or a resource it references, could be retrieved</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>document_structure</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Whether the document meets the format and content requirements of a Client ID Metadata Document</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>supported_values</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Whether the reporter implements the member values the document uses</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>metadata_policy</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Whether the reporter's policy permits the metadata for the client</td>
+              </tr>
+            </tbody>
+          </table>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-reasons">
+<section id="section-11.5">
+        <h3 id="name-oauth-client-metadata-report">
+<a href="#section-11.5" class="section-number selfRef">11.5. </a><a href="#name-oauth-client-metadata-report" class="section-name selfRef">OAuth Client Metadata Report Reasons Registry</a>
+        </h3>
+<p id="section-11.5-1">This specification establishes the "OAuth Client Metadata Report
+Reasons" registry.<a href="#section-11.5-1" class="pilcrow">¶</a></p>
+<div id="iana-reasons-template">
+<section id="section-11.5.1">
+          <h4 id="name-registration-template-2">
+<a href="#section-11.5.1" class="section-number selfRef">11.5.1. </a><a href="#name-registration-template-2" class="section-name selfRef">Registration Template</a>
+          </h4>
+<span class="break"></span><dl class="dlParallel" id="section-11.5.1-1">
+            <dt id="section-11.5.1-1.1">Reason Name:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.5.1-1.2">
+              <p id="section-11.5.1-1.2.1">The reason code, as used in the <code>reason</code> member of a result object.<a href="#section-11.5.1-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.5.1-1.3">Applicable Checks:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.5.1-1.4">
+              <p id="section-11.5.1-1.4.1">The checks with which the reason code is used, or "any".<a href="#section-11.5.1-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.5.1-1.5">Reason Description:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.5.1-1.6">
+              <p id="section-11.5.1-1.6.1">A brief description of the condition the reason code reports.<a href="#section-11.5.1-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.5.1-1.7">Change Controller:</dt>
+            <dd style="margin-left: 1.5em" id="section-11.5.1-1.8">
+              <p id="section-11.5.1-1.8.1">For IETF Stream RFCs, "IETF". Otherwise, the name of the responsible
+party.<a href="#section-11.5.1-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+<dt id="section-11.5.1-1.9">Specification Document(s):</dt>
+            <dd style="margin-left: 1.5em" id="section-11.5.1-1.10">
+              <p id="section-11.5.1-1.10.1">A reference to the document that defines the reason code.<a href="#section-11.5.1-1.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="iana-reasons-contents">
+<section id="section-11.5.2">
+          <h4 id="name-initial-registry-contents-2">
+<a href="#section-11.5.2" class="section-number selfRef">11.5.2. </a><a href="#name-initial-registry-contents-2" class="section-name selfRef">Initial Registry Contents</a>
+          </h4>
+<p id="section-11.5.2-1">For each of the following entries, the Change Controller is "IETF" and
+the Specification Document is <a href="#reasons" class="auto internal xref">Section 5.2</a> of this specification.<a href="#section-11.5.2-1" class="pilcrow">¶</a></p>
+<span id="name-initial-reason-codes"></span><div id="tab-reasons">
+<table class="center" id="table-2">
+            <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-initial-reason-codes" class="selfRef">Initial Reason Codes</a>
+            </caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Reason Name</th>
+                <th class="text-left" rowspan="1" colspan="1">Applicable Checks</th>
+                <th class="text-left" rowspan="1" colspan="1">Reason Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>unreachable</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>retrieval</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Connection failed or timed out</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>tls_error</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>retrieval</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">TLS or certificate failure</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>redirect</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>retrieval</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">3xx response, not followed</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>http_error</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>retrieval</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Status neither 200 nor 3xx</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>too_large</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>retrieval</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Size limit exceeded</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>invalid_json</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>document_structure</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Not a JSON object</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>client_id_mismatch</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>document_structure</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>client_id</code> mismatch</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>invalid_value</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>document_structure</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Malformed or prohibited value</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>unsupported_value</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>supported_values</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Value not supported</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>policy_violation</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>metadata_policy</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">Not permitted by policy</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>runtime_evidence_required</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">any</td>
+                <td class="text-left" rowspan="1" colspan="1">Needs request-time evidence</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>not_evaluated</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">any</td>
+                <td class="text-left" rowspan="1" colspan="1">Check not performed</td>
+              </tr>
+            </tbody>
+          </table>
+</div>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-12">
+      <h2 id="name-references">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-12.1">
+        <h3 id="name-normative-references">
+<a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="CIMD">[CIMD]</dt>
+        <dd>
+<span class="refAuthor">Parecki, A.</span> and <span class="refAuthor">E. Smith</span>, <span class="refTitle">"OAuth Client ID Metadata Document"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-client-id-metadata-document-03</span>, <time datetime="2026-11-02" class="refDate">2 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="IANA.media-types">[IANA.media-types]</dt>
+        <dd>
+<span class="refAuthor">IANA</span>, <span class="refTitle">"Media Types"</span>, <span>n.d.</span>, <span>&lt;<a href="https://www.iana.org/assignments/media-types">https://www.iana.org/assignments/media-types</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="IANA.oauth-parameters">[IANA.oauth-parameters]</dt>
+        <dd>
+<span class="refAuthor">IANA</span>, <span class="refTitle">"OAuth Parameters"</span>, <span>n.d.</span>, <span>&lt;<a href="https://www.iana.org/assignments/oauth-parameters">https://www.iana.org/assignments/oauth-parameters</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3339">[RFC3339]</dt>
+        <dd>
+<span class="refAuthor">Klyne, G.</span> and <span class="refAuthor">C. Newman</span>, <span class="refTitle">"Date and Time on the Internet: Timestamps"</span>, <span class="seriesInfo">RFC 3339</span>, <span class="seriesInfo">DOI 10.17487/RFC3339</span>, <time datetime="2002-07" class="refDate">July 2002</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3339">https://www.rfc-editor.org/rfc/rfc3339</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3986">[RFC3986]</dt>
+        <dd>
+<span class="refAuthor">Berners-Lee, T.</span>, <span class="refAuthor">Fielding, R.</span>, and <span class="refAuthor">L. Masinter</span>, <span class="refTitle">"Uniform Resource Identifier (URI): Generic Syntax"</span>, <span class="seriesInfo">STD 66</span>, <span class="seriesInfo">RFC 3986</span>, <span class="seriesInfo">DOI 10.17487/RFC3986</span>, <time datetime="2005-01" class="refDate">January 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3986">https://www.rfc-editor.org/rfc/rfc3986</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6454">[RFC6454]</dt>
+        <dd>
+<span class="refAuthor">Barth, A.</span>, <span class="refTitle">"The Web Origin Concept"</span>, <span class="seriesInfo">RFC 6454</span>, <span class="seriesInfo">DOI 10.17487/RFC6454</span>, <time datetime="2011-12" class="refDate">December 2011</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6454">https://www.rfc-editor.org/rfc/rfc6454</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6585">[RFC6585]</dt>
+        <dd>
+<span class="refAuthor">Nottingham, M.</span> and <span class="refAuthor">R. Fielding</span>, <span class="refTitle">"Additional HTTP Status Codes"</span>, <span class="seriesInfo">RFC 6585</span>, <span class="seriesInfo">DOI 10.17487/RFC6585</span>, <time datetime="2012-04" class="refDate">April 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6585">https://www.rfc-editor.org/rfc/rfc6585</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6749">[RFC6749]</dt>
+        <dd>
+<span class="refAuthor">Hardt, D., Ed.</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework"</span>, <span class="seriesInfo">RFC 6749</span>, <span class="seriesInfo">DOI 10.17487/RFC6749</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6749">https://www.rfc-editor.org/rfc/rfc6749</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6838">[RFC6838]</dt>
+        <dd>
+<span class="refAuthor">Freed, N.</span>, <span class="refAuthor">Klensin, J.</span>, and <span class="refAuthor">T. Hansen</span>, <span class="refTitle">"Media Type Specifications and Registration Procedures"</span>, <span class="seriesInfo">BCP 13</span>, <span class="seriesInfo">RFC 6838</span>, <span class="seriesInfo">DOI 10.17487/RFC6838</span>, <time datetime="2013-01" class="refDate">January 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6838">https://www.rfc-editor.org/rfc/rfc6838</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7515">[RFC7515]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Signature (JWS)"</span>, <span class="seriesInfo">RFC 7515</span>, <span class="seriesInfo">DOI 10.17487/RFC7515</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7515">https://www.rfc-editor.org/rfc/rfc7515</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7591">[RFC7591]</dt>
+        <dd>
+<span class="refAuthor">Richer, J., Ed.</span>, <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Machulak, M.</span>, and <span class="refAuthor">P. Hunt</span>, <span class="refTitle">"OAuth 2.0 Dynamic Client Registration Protocol"</span>, <span class="seriesInfo">RFC 7591</span>, <span class="seriesInfo">DOI 10.17487/RFC7591</span>, <time datetime="2015-07" class="refDate">July 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7591">https://www.rfc-editor.org/rfc/rfc7591</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8126">[RFC8126]</dt>
+        <dd>
+<span class="refAuthor">Cotton, M.</span>, <span class="refAuthor">Leiba, B.</span>, and <span class="refAuthor">T. Narten</span>, <span class="refTitle">"Guidelines for Writing an IANA Considerations Section in RFCs"</span>, <span class="seriesInfo">BCP 26</span>, <span class="seriesInfo">RFC 8126</span>, <span class="seriesInfo">DOI 10.17487/RFC8126</span>, <time datetime="2017-06" class="refDate">June 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8126">https://www.rfc-editor.org/rfc/rfc8126</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8259">[RFC8259]</dt>
+        <dd>
+<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8259">https://www.rfc-editor.org/rfc/rfc8259</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8414">[RFC8414]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Sakimura, N.</span>, and <span class="refAuthor">J. Bradley</span>, <span class="refTitle">"OAuth 2.0 Authorization Server Metadata"</span>, <span class="seriesInfo">RFC 8414</span>, <span class="seriesInfo">DOI 10.17487/RFC8414</span>, <time datetime="2018-06" class="refDate">June 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8414">https://www.rfc-editor.org/rfc/rfc8414</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9110">[RFC9110]</dt>
+        <dd>
+<span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Semantics"</span>, <span class="seriesInfo">STD 97</span>, <span class="seriesInfo">RFC 9110</span>, <span class="seriesInfo">DOI 10.17487/RFC9110</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9110">https://www.rfc-editor.org/rfc/rfc9110</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9530">[RFC9530]</dt>
+        <dd>
+<span class="refAuthor">Polli, R.</span> and <span class="refAuthor">L. Pardue</span>, <span class="refTitle">"Digest Fields"</span>, <span class="seriesInfo">RFC 9530</span>, <span class="seriesInfo">DOI 10.17487/RFC9530</span>, <time datetime="2024-02" class="refDate">February 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9530">https://www.rfc-editor.org/rfc/rfc9530</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9562">[RFC9562]</dt>
+      <dd>
+<span class="refAuthor">Davis, K.</span>, <span class="refAuthor">Peabody, B.</span>, and <span class="refAuthor">P. Leach</span>, <span class="refTitle">"Universally Unique IDentifiers (UUIDs)"</span>, <span class="seriesInfo">RFC 9562</span>, <span class="seriesInfo">DOI 10.17487/RFC9562</span>, <time datetime="2024-05" class="refDate">May 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9562">https://www.rfc-editor.org/rfc/rfc9562</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-12.2">
+        <h3 id="name-informative-references">
+<a href="#section-12.2" class="section-number selfRef">12.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC8460">[RFC8460]</dt>
+        <dd>
+<span class="refAuthor">Margolis, D.</span>, <span class="refAuthor">Brotman, A.</span>, <span class="refAuthor">Ramakrishnan, B.</span>, <span class="refAuthor">Jones, J.</span>, and <span class="refAuthor">M. Risher</span>, <span class="refTitle">"SMTP TLS Reporting"</span>, <span class="seriesInfo">RFC 8460</span>, <span class="seriesInfo">DOI 10.17487/RFC8460</span>, <time datetime="2018-09" class="refDate">September 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8460">https://www.rfc-editor.org/rfc/rfc8460</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9111">[RFC9111]</dt>
+        <dd>
+<span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Caching"</span>, <span class="seriesInfo">STD 98</span>, <span class="seriesInfo">RFC 9111</span>, <span class="seriesInfo">DOI 10.17487/RFC9111</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9111">https://www.rfc-editor.org/rfc/rfc9111</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9421">[RFC9421]</dt>
+        <dd>
+<span class="refAuthor">Backman, A., Ed.</span>, <span class="refAuthor">Richer, J., Ed.</span>, and <span class="refAuthor">M. Sporny</span>, <span class="refTitle">"HTTP Message Signatures"</span>, <span class="seriesInfo">RFC 9421</span>, <span class="seriesInfo">DOI 10.17487/RFC9421</span>, <time datetime="2024-02" class="refDate">February 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9421">https://www.rfc-editor.org/rfc/rfc9421</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9990">[RFC9990]</dt>
+      <dd>
+<span class="refAuthor">Brotman, A., Ed.</span>, <span class="refTitle">"Domain-Based Message Authentication, Reporting, and Conformance (DMARC) Aggregate Reporting"</span>, <span class="seriesInfo">RFC 9990</span>, <span class="seriesInfo">DOI 10.17487/RFC9990</span>, <time datetime="2026-05" class="refDate">May 2026</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9990">https://www.rfc-editor.org/rfc/rfc9990</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="issues">
+<section id="appendix-A">
+      <h2 id="name-open-issues">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
+      </h2>
+<p id="appendix-A-1">This section is to be removed before publishing as an RFC.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">The following questions affect the mechanism this document defines.
+Other open questions are tracked in the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues">issue
+tracker</a>.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="appendix-A-3">
+<li id="appendix-A-3.1">
+          <p id="appendix-A-3.1.1">Reporting before first acceptance. A reporter cannot report problems
+with a Client Identifier URL for which it has never accepted a
+document, including its first retrieval (<a href="#establishing" class="auto internal xref">Section 4.1</a>), although
+this is when publishers most need feedback. Should a document that
+the reporter does not accept, but that passes the
+<code>document_structure</code> check, be able to supply a collector for reports
+about its own rejection? Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/1">issue
+#1</a>.<a href="#appendix-A-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-3.2">
+          <p id="appendix-A-3.2.1">Cross-origin collectors. The same-origin requirement (<a href="#metadata" class="auto internal xref">Section 4</a>)
+prevents publishers that serve their document from static hosting
+from receiving reports, and on a shared origin it does not establish
+that the recipient consents (<a href="#shared-origins" class="auto internal xref">Section 9.3</a>). What mechanism
+should let a collector authorize the reports it receives? Tracked as
+<a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/2">issue
+#2</a>.<a href="#appendix-A-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-3.3">
+          <p id="appendix-A-3.3.1">Conditional requests. <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6" class="relref">Section 6</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> treats every status code
+other than 200 as an error, while <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6.2" class="relref">Section 6.2</a> of [<a href="#CIMD" class="cite xref">CIMD</a>]</span> recommends
+HTTP caching, which implies revalidation with 304 responses. This
+document defines 304 handling only for candidate retrieval
+(<a href="#digest" class="auto internal xref">Section 5.5</a>); the rule for active documents needs coordination with
+<span>[<a href="#CIMD" class="cite xref">CIMD</a>]</span>. Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/9">issue
+#9</a>.<a href="#appendix-A-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-3.4">
+          <p id="appendix-A-3.4.1">Scope of candidate evaluation. Does candidate evaluation
+(<a href="#candidate" class="auto internal xref">Section 5.4</a>) provide enough beyond authorization server metadata
+to justify its complexity, and should it be specified separately from
+active document reporting? Tracked as <a href="https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11">issue
+#11</a>.<a href="#appendix-A-3.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+</section>
+</div>
+<div id="history">
+<section id="appendix-B">
+      <h2 id="name-document-history">
+<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-document-history" class="section-name selfRef">Document History</a>
+      </h2>
+<p id="appendix-B-1">This section is to be removed before publishing as an RFC.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-2">-00<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-B-3.1">
+          <p id="appendix-B-3.1.1">Initial version.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Karl McGuinness</span></div>
+<div dir="auto" class="left"><span class="org">Independent</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:public@karlmcguinness.com" class="email">public@karlmcguinness.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
