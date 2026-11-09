@@ -77,50 +77,6 @@ authorization server processes OAuth requests, and neither a report nor
 its absence establishes that a client is authorized or that a metadata
 change is safe to deploy.
 
---- to_be_removed_note_Open_Issues
-
-The following questions are open. Each is tracked as an issue in the
-[GitHub repository](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues),
-where discussion is welcome.
-
-* Reporting before first acceptance (#1): should a document that the
-  reporter does not accept be able to name a collector for reports about
-  its own rejection?
-
-* Cross-origin collectors (#2): what mechanism would let a collector on
-  another origin, or on a shared origin, authorize the reports it
-  receives?
-
-* Reporter authentication (#3): should reports be signed, given that some
-  reporters prefer not to identify themselves?
-
-* Advertising support (#4): should authorization servers advertise
-  reporting support in their metadata?
-
-* Operational parameters (#5): are the report size limit, delivery window,
-  reporting period, candidate report interval, and configuration
-  retention period right?
-
-* Granularity of results (#6): how much should reason codes disclose about
-  a reporter's policy?
-
-* Request-level reports (#7): should a later version report request-time
-  failures attributable to metadata?
-
-* Referenced resources (#8): should reports carry digests of resources,
-  such as a JWK Set, that an evaluation used?
-
-* Conditional requests (#9): how should a 304 response be treated for
-  active documents, given that Section 6 of {{CIMD}} treats every status
-  code other than 200 as an error?
-
-* Applicability (#10): should reporting extend to clients registered
-  through Dynamic Client Registration or to software statements?
-
-* Candidate evaluation (#11): does it justify its complexity, should it be
-  specified separately, and is one candidate URL retrieved by the
-  reporter the right model?
-
 --- middle
 
 # Introduction {#intro}
@@ -1267,6 +1223,44 @@ the Specification Document is {{reasons}} of this specification.
 {: #tab-reasons title="Initial Reason Codes"}
 
 --- back
+
+# Open Issues {#issues}
+{:removeinrfc}
+
+The following questions affect the mechanism this document defines.
+Other open questions are tracked in the [issue
+tracker](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues).
+
+1. Reporting before first acceptance. A reporter cannot report problems
+   with a Client Identifier URL for which it has never accepted a
+   document, including its first retrieval ({{establishing}}), although
+   this is when publishers most need feedback. Should a document that
+   the reporter does not accept, but that passes the
+   `document_structure` check, be able to supply a collector for reports
+   about its own rejection? Tracked as [issue
+   #1](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/1).
+
+2. Cross-origin collectors. The same-origin requirement ({{metadata}})
+   prevents publishers that serve their document from static hosting
+   from receiving reports, and on a shared origin it does not establish
+   that the recipient consents ({{shared-origins}}). What mechanism
+   should let a collector authorize the reports it receives? Tracked as
+   [issue
+   #2](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/2).
+
+3. Conditional requests. {{Section 6 of CIMD}} treats every status code
+   other than 200 as an error, while {{Section 6.2 of CIMD}} recommends
+   HTTP caching, which implies revalidation with 304 responses. This
+   document defines 304 handling only for candidate retrieval
+   ({{digest}}); the rule for active documents needs coordination with
+   {{CIMD}}. Tracked as [issue
+   #9](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/9).
+
+4. Scope of candidate evaluation. Does candidate evaluation
+   ({{candidate}}) provide enough beyond authorization server metadata
+   to justify its complexity, and should it be specified separately from
+   active document reporting? Tracked as [issue
+   #11](https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11).
 
 # Document History {#history}
 {:removeinrfc}
