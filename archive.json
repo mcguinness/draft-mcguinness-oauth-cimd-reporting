@@ -1,0 +1,236 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2026-11-10T06:29:03.746744+00:00",
+  "repo": "mcguinness/draft-mcguinness-oauth-cimd-reporting",
+  "labels": [
+    {
+      "name": "accessibility",
+      "description": "Barrier affecting people with disabilities",
+      "color": "f143ab"
+    },
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [
+    {
+      "number": 1,
+      "id": "I_kwDOVoaZ288AAAABdxq34w",
+      "title": "Reporting before first acceptance",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/1",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "A reporter can only report to a collector named by an active document it has accepted ([Section 4.1](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#establishing)). Problems with a Client Identifier URL for which an authorization server has never accepted a document, including its first retrieval, therefore cannot be reported, although this is when publishers most need feedback.\n\n**Question:** Should a document that the reporter does not accept, but that passes the `document_structure` check including the `client_id` match, be able to supply a collector for reports about its own rejection? Establishing permission to report could have different requirements from accepting metadata for OAuth use.\n\n_Listed in the Open Issues appendix of draft-mcguinness-oauth-cimd-reporting._",
+      "createdAt": "2026-11-09T19:32:19Z",
+      "updatedAt": "2026-11-09T19:41:17Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 2,
+      "id": "I_kwDOVoaZ288AAAABdxq4wA",
+      "title": "Collector authorization (cross-origin and shared origins)",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/2",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The same-origin requirement ([Section 4](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#metadata)) prevents publishers that serve their document from static hosting from receiving reports.\n\n**Question:** What authorization mechanism would allow collectors on other origins without letting reports be directed at third parties? Precedents include DMARC external destination verification ([RFC 9990, Section 4](https://www.rfc-editor.org/rfc/rfc9990.html#section-4)) and a well-known resource at the collector's origin. Because the same origin does not establish consent on shared origins ([Section 9.3](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#shared-origins)), such a mechanism could apply to same-origin collectors as well.\n\n_Listed in the Open Issues appendix of draft-mcguinness-oauth-cimd-reporting._",
+      "createdAt": "2026-11-09T19:32:20Z",
+      "updatedAt": "2026-11-09T19:53:21Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 3,
+      "id": "I_kwDOVoaZ288AAAABdxq55A",
+      "title": "Reporter authentication",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/3",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Reports are unauthenticated ([Section 9.4](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#forged)).\n\n**Question:** Should reporters authenticate reports, for example by signing delivery requests with HTTP Message Signatures ([RFC 9421](https://www.rfc-editor.org/rfc/rfc9421.html)) using keys published in their authorization server metadata, or by signing reports as JWS objects? Either conflicts with reporters that prefer not to identify themselves ([Section 10.1](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#relationships)).",
+      "createdAt": "2026-11-09T19:32:21Z",
+      "updatedAt": "2026-11-09T19:41:21Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 4,
+      "id": "I_kwDOVoaZ288AAAABdxq6_g",
+      "title": "Advertising reporting support in authorization server metadata",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/4",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Authorization servers could advertise support for reporting in their authorization server metadata, as [Section 8 of CIMD](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-8) does for Client ID Metadata Documents.\n\n**Question:** Is this worth defining? It would let publishers distinguish non-participation from absence of problems, but it would not make silence meaningful ([Section 8](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#interpreting)).",
+      "createdAt": "2026-11-09T19:32:22Z",
+      "updatedAt": "2026-11-09T19:41:22Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 5,
+      "id": "I_kwDOVoaZ288AAAABdxq8DA",
+      "title": "Operational parameters",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/5",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The draft fixes several values that need validation against deployment experience:\n\n- 16384-octet report limit ([Section 7.3](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#bounds))\n- 24-hour delivery window ([Section 7.3](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#bounds))\n- one-hour minimum reporting period for active document reports ([Section 7.3](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#bounds))\n- 24-hour candidate report interval ([Section 7.3](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#bounds))\n- 7-day retention of reporting configuration ([Section 4.1](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#establishing))\n\n**Question:** Are these the right values, and should any be configurable or advertised?",
+      "createdAt": "2026-11-09T19:32:23Z",
+      "updatedAt": "2026-11-09T19:41:24Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 6,
+      "id": "I_kwDOVoaZ288AAAABdxq87A",
+      "title": "Granularity of results",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/6",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "More specific reason codes help publishers but disclose more of the reporter's policy ([Section 9.5](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#oracle)).\n\n**Question:** Is the initial reason-code set ([Section 5.2](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#reasons)) at the right granularity? Should `metadata_policy` results be able to reference a reporter-published policy document?",
+      "createdAt": "2026-11-09T19:32:24Z",
+      "updatedAt": "2026-11-09T19:41:26Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 7,
+      "id": "I_kwDOVoaZ288AAAABdxq-Eg",
+      "title": "Request-level reports",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/7",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Publishers would benefit from reports of request-time failures attributable to metadata, such as an unregistered `redirect_uri` or a client authentication failure. These raise privacy and volume questions that document reports avoid, and are excluded from this version ([Section 1.1](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#scope)).\n\n**Question:** Should a later version define request-level reports, and under what privacy constraints?",
+      "createdAt": "2026-11-09T19:32:25Z",
+      "updatedAt": "2026-11-09T19:41:27Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 8,
+      "id": "I_kwDOVoaZ288AAAABdxq_FQ",
+      "title": "Digests of referenced resources",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/8",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "A document digest does not identify the resources an evaluation used, such as a JWK Set at `jwks_uri` ([Section 8](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#interpreting)).\n\n**Question:** Should reports carry digests of referenced resources? This matters if diagnosing key changes proves to be a central use.",
+      "createdAt": "2026-11-09T19:32:26Z",
+      "updatedAt": "2026-11-09T19:41:29Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 9,
+      "id": "I_kwDOVoaZ288AAAABdxq_3A",
+      "title": "Conditional requests and 304 responses",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/9",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "[Section 6 of CIMD](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6) treats every status code other than 200 as an error, while [Section 6.2 of CIMD](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-6.2) recommends HTTP caching, which implies revalidation with 304 responses. This draft defines 304 handling only for candidate retrieval and otherwise defers to the reporter's processing under CIMD ([Section 5.5](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#digest), [Section 4.1](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#establishing)).\n\n**Question:** How should a 304 response be treated for active documents? This needs coordination with the CIMD authors.\n\n_Listed in the Open Issues appendix of draft-mcguinness-oauth-cimd-reporting._",
+      "createdAt": "2026-11-09T19:32:27Z",
+      "updatedAt": "2026-11-09T19:41:31Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 10,
+      "id": "I_kwDOVoaZ288AAAABdxrA5Q",
+      "title": "Applicability beyond Client ID Metadata Documents",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/10",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "This version applies only to clients identified by a Client Identifier URL ([Section 1.1](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#scope)).\n\n**Question:** Should a later version define how reporting configuration is established for clients registered through Dynamic Client Registration ([RFC 7591](https://www.rfc-editor.org/rfc/rfc7591.html)), or for metadata carried in a software statement ([Section 4.3 of CIMD](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-03#section-4.3))?",
+      "createdAt": "2026-11-09T19:32:28Z",
+      "updatedAt": "2026-11-09T19:41:32Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 11,
+      "id": "I_kwDOVoaZ288AAAABdxrB_w",
+      "title": "Combining active reporting and candidate evaluation",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-cimd-reporting/issues/11",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "This version supports one candidate URL, retrieved by the reporter ([Section 5.4](https://mcguinness.github.io/draft-mcguinness-oauth-cimd-reporting/draft-mcguinness-oauth-cimd-reporting.html#candidate)). Alternatives include several candidates for staged rollouts, and a push model in which the publisher submits candidates to authorization servers.\n\n**Questions:** Does candidate evaluation provide enough beyond authorization server metadata to justify its complexity? If so, should it stay in this document or be specified separately from active document reporting? Is one pull-based candidate URL the right model?\n\n_Listed in the Open Issues appendix of draft-mcguinness-oauth-cimd-reporting._",
+      "createdAt": "2026-11-09T19:32:29Z",
+      "updatedAt": "2026-11-09T19:53:22Z",
+      "closedAt": null,
+      "comments": []
+    }
+  ],
+  "pulls": []
+}
